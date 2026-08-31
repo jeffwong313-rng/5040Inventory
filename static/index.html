@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Warehouse Inventory Dashboard</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app">
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">📦</span>
+        <div class="brand-text">
+          <h1>Warehouse Inventory Count</h1>
+          <p id="event-date" class="subtitle">Loading…</p>
+        </div>
+      </div>
+      <div class="sync-status" id="sync-status">
+        <span class="dot" id="sync-dot"></span>
+        <span id="sync-label">Connecting…</span>
+      </div>
+    </header>
+
+    <div id="stale-banner" class="stale-banner" hidden>
+      Data may be out of date — retrying the sheet in the background.
+    </div>
+
+    <main class="layout">
+
+      <section class="panel panel-timeline" id="timeline-panel" aria-label="Timeline and sequence">
+        <div class="panel-head">
+          <h2>Timeline &amp; Sequence</h2>
+        </div>
+        <div class="timeline-track" id="timeline-track">
+          <p class="empty-state">Loading timeline…</p>
+        </div>
+      </section>
+
+      <section class="panel panel-teams" id="teams-panel" aria-label="Count teams">
+        <div class="panel-head">
+          <h2>Count Teams</h2>
+          <input
+            id="team-filter"
+            class="team-filter"
+            type="search"
+            placeholder="Find your team, name, or zone…"
+            autocomplete="off"
+          />
+        </div>
+        <div class="phase-tabs" id="phase-tabs"></div>
+        <div class="teams-scroll" id="teams-scroll">
+          <p class="empty-state">Loading teams…</p>
+        </div>
+      </section>
+
+      <section class="panel panel-bins" id="bins-panel" aria-label="Bin count progress">
+        <div class="panel-head">
+          <h2>Bin Count Progress</h2>
+        </div>
+
+        <div class="bins-summary" id="bins-summary">
+          <div class="progress-ring-wrap">
+            <svg viewBox="0 0 120 120" class="progress-ring" aria-hidden="true">
+              <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-value" id="ring-value" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="ring-label">
+              <span id="percent-complete">0%</span>
+              <small>counted</small>
+            </div>
+          </div>
+
+          <div class="bins-stats" id="bins-stats"></div>
+        </div>
+
+        <div class="bins-detail">
+          <div class="bins-by-warehouse" id="bins-by-warehouse"></div>
+          <div class="bins-remaining">
+            <h3>Still to count</h3>
+            <div class="remaining-scroll" id="remaining-scroll">
+              <p class="empty-state">Loading…</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

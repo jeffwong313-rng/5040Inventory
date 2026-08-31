@@ -1,0 +1,18 @@
+,,,,,,,,
+,,,,,,,,
+,For PreCounts,Count only loose material,,,,,,
+,Team Member 1,Team Member 2,Team Member 3,Section,,,,
+Team1,Alice Adams,Bob Baker,,"WH2, then float for whoever needs help",,,,
+Team2,Carla Chen,Devon Diaz,,WH1-Green A-B,,,,
+,,,,,,,,
+,For First Count,,,,,,,
+,,,,,,,"If colored, group together for next team",
+,Team Member 1,Team Member 2,Team Member 3,Zone,Notes,,Zones Left,Count Team
+Team1,Alice Adams,Bob Baker,,"WH1-YELLOW, WH1-RED-A",,,WH1-BLUE-C,Team 3
+Team2,Carla Chen,Devon Diaz,,"WH1-ORANGE-A, WH1-ORANGE-B",,,WH1-BLUE-D,Team 3
+,,,,,,,,
+,For Variance 1,,,,,,,
+,,,,,,,,YARD
+,Team Member 1,Team Member 2,MFR,MFR2,MFR3,Zones Left,Count Team,
+Team1,Alice Adams,Bob Baker,,,,,,
+Team2,Carla Chen,Devon Diaz,,,,,,
