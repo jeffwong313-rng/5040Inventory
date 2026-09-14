@@ -38,6 +38,21 @@
     setSyncStatus(source || {});
   }
 
+  // ---------------- header clock ----------------
+
+  function formatClock(date) {
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
+    return `${hours}:${minutes} ${ampm}`;
+  }
+
+  function tickClock() {
+    $("header-clock").textContent = formatClock(new Date());
+  }
+
   function setSyncStatus(source) {
     const el = $("sync-status");
     const dot = $("sync-dot");
@@ -81,13 +96,21 @@
       return;
     }
 
-    const nowIdx = closestPastEntryIndex(entries);
+    // Only treat an entry as "happening now" / "already passed" on the
+    // actual event day -- otherwise every day would show some entry as
+    // current just because its clock time matches, which is misleading
+    // before/after the real count day.
+    const eventDate = parseEventDate(timeline && timeline.date);
+    const isEventDay = eventDate ? isSameCalendarDay(eventDate, new Date()) : false;
+    const nowIdx = isEventDay ? closestPastEntryIndex(entries) : -1;
 
     track.innerHTML = entries
       .map((e, i) => {
         const isNow = i === nowIdx;
+        const isPast = nowIdx !== -1 && i < nowIdx && parseClockTime(e.time) != null;
+        const cls = ["timeline-item", isNow && "now", isPast && "past"].filter(Boolean).join(" ");
         return `
-          <div class="timeline-item${isNow ? " now" : ""}">
+          <div class="${cls}">
             <div class="t-time">${escapeHtml(e.time || "")}</div>
             <div class="t-event">${escapeHtml(e.event || "")}</div>
             ${e.notes ? `<div class="t-notes">${escapeHtml(e.notes)}</div>` : ""}
@@ -122,6 +145,28 @@
     if (ampm === "PM" && hours !== 12) hours += 12;
     if (ampm === "AM" && hours === 12) hours = 0;
     return hours * 60 + minutes;
+  }
+
+  const MONTH_NAMES = [
+    "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+  ];
+
+  function parseEventDate(text) {
+    if (!text) return null;
+    const m = /([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})/.exec(text);
+    if (!m) return null;
+    const monthIdx = MONTH_NAMES.indexOf(m[1].toLowerCase());
+    if (monthIdx === -1) return null;
+    return new Date(parseInt(m[3], 10), monthIdx, parseInt(m[2], 10));
+  }
+
+  function isSameCalendarDay(a, b) {
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
   }
 
   // ---------------- count teams ----------------
@@ -310,6 +355,9 @@
   }
 
   // ---------------- boot ----------------
+
+  tickClock();
+  setInterval(tickClock, 1000);
 
   loadDashboard();
   setInterval(loadDashboard, POLL_MS);
