@@ -36,23 +36,31 @@ html, body {
 /* ---------- header ---------- */
 
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 22px;
+  padding: 22px 28px;
   border-bottom: 1px solid var(--border);
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.brand { display: flex; align-items: center; gap: 12px; }
-.brand .logo { font-size: 1.8em; line-height: 1; }
-.brand-text h1 { margin: 0; font-size: 1.35em; letter-spacing: 0.2px; }
-.brand-text .subtitle { margin: 2px 0 0; color: var(--text-dim); font-size: 0.85em; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand .logo { font-size: 2.6em; line-height: 1; }
+.brand h1 { margin: 0; font-size: 2em; letter-spacing: 0.2px; }
+
+.header-date {
+  margin: 0;
+  justify-self: center;
+  color: var(--text);
+  font-size: 1.35em;
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 .sync-status {
   display: flex;
   align-items: center;
+  justify-self: end;
   gap: 8px;
   font-size: 0.85em;
   color: var(--text-dim);
@@ -116,8 +124,8 @@ html, body {
   margin-bottom: 10px;
 }
 .panel-head h2 { margin: 0; font-size: 1.05em; letter-spacing: 0.3px; color: var(--text); }
-.panel-bins .panel-head h2,
-.panel-teams .panel-head h2 { font-size: 1.15em; }
+.panel-bins .panel-head h2 { font-size: 1.15em; }
+.panel-teams .panel-head h2 { font-size: 1.4em; }
 
 .empty-state { color: var(--text-dim); font-size: 0.9em; }
 
@@ -126,9 +134,9 @@ html, body {
 
 @media (min-width: 1100px) {
   .layout {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.7fr 1fr;
     grid-template-rows: auto 1fr;
-    height: calc(100vh - 60px); /* fit a TV/kiosk screen without page scroll */
+    height: calc(100vh - 84px); /* fit a TV/kiosk screen without page scroll */
   }
   .panel-timeline { grid-column: 1 / -1; grid-row: 1; max-height: 220px; }
   .panel-teams { grid-column: 1; grid-row: 2; }
@@ -170,8 +178,8 @@ html, body {
   border: 1px solid var(--border);
   color: var(--text);
   border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 0.9em;
+  padding: 9px 14px;
+  font-size: 1.05em;
   min-width: 200px;
   flex: 1 1 220px;
 }
@@ -181,15 +189,15 @@ html, body {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .phase-tab {
   background: var(--panel-alt);
   border: 1px solid var(--border);
   color: var(--text-dim);
   border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 0.85em;
+  padding: 7px 16px;
+  font-size: 1em;
   cursor: pointer;
 }
 .phase-tab.active { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
@@ -203,19 +211,19 @@ html, body {
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
 }
 
 .team-card {
   background: var(--panel-alt);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 12px 14px;
 }
-.team-card .team-id { font-weight: 700; color: var(--accent); font-size: 0.95em; }
-.team-card .team-members { margin: 4px 0; font-size: 0.9em; }
-.team-card .team-field { font-size: 0.82em; color: var(--text-dim); margin-top: 3px; }
+.team-card .team-id { font-weight: 700; color: var(--accent); font-size: 1.2em; }
+.team-card .team-members { margin: 5px 0; font-size: 1.1em; }
+.team-card .team-field { font-size: 1em; color: var(--text-dim); margin-top: 4px; }
 .team-card .team-field b { color: var(--text); font-weight: 600; }
 .team-card.dimmed { opacity: 0.3; }
 
@@ -295,12 +303,25 @@ html, body {
   .layout { grid-template-columns: 1fr; height: auto; }
   .panel { max-height: none; }
   .teams-scroll, .remaining-scroll { max-height: 60vh; }
-  .topbar { padding: 12px 16px; }
   :root { --font-scale: 1.02; }
 }
 
+@media (max-width: 700px) {
+  .topbar {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    padding: 14px 16px;
+    gap: 8px;
+  }
+  .brand .logo { font-size: 2em; }
+  .brand h1 { font-size: 1.4em; }
+  .header-date { justify-self: center; font-size: 1.1em; }
+  .sync-status { justify-self: center; }
+}
+
 @media (max-width: 480px) {
-  .brand-text h1 { font-size: 1.1em; }
+  .brand h1 { font-size: 1.1em; }
   .team-grid { grid-template-columns: 1fr; }
   .bins-summary { justify-content: center; text-align: center; }
 }
