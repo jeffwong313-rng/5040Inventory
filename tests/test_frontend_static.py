@@ -62,3 +62,19 @@ def test_app_js_served(client):
     resp = client.get("/app.js")
     assert resp.status_code == 200
     assert "javascript" in resp.headers["content-type"]
+
+
+def test_static_assets_are_not_cached_without_revalidation(client):
+    # This dashboard gets tweaked and redeployed regularly -- a browser
+    # (or a TV that never gets a hard refresh) must always check back
+    # instead of silently showing a stale layout.
+    for path in ("/", "/styles.css", "/app.js"):
+        resp = client.get(path)
+        assert resp.headers.get("cache-control") == "no-cache", path
+
+
+def test_api_responses_are_not_marked_no_cache_by_the_static_middleware(client):
+    # The no-cache header is for the static frontend; it shouldn't mask
+    # whatever caching behavior the API endpoints want on their own.
+    resp = client.get("/api/health")
+    assert resp.headers.get("cache-control") != "no-cache"

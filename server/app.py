@@ -5,11 +5,31 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 
 from .cache import cache
 from .routes.api import router as api_router
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+
+
+class NoCacheStaticMiddleware(BaseHTTPMiddleware):
+    """Forces browsers to revalidate the dashboard's HTML/CSS/JS on every
+    load instead of serving a stale cached copy. This is a dashboard that
+    gets tweaked and redeployed; without this, a phone or the TV's browser
+    can keep showing an old layout until someone thinks to hard-refresh.
+
+    Still cheap: revalidation is a conditional GET (304 if unchanged), not
+    a full re-download every time -- this just stops browsers from
+    skipping that check entirely.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if not request.url.path.startswith("/api"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
 
 
 def create_app(start_background: bool = True) -> FastAPI:
@@ -31,6 +51,7 @@ def create_app(start_background: bool = True) -> FastAPI:
                 await cache.stop()
 
     app = FastAPI(title="Warehouse Inventory Dashboard", lifespan=lifespan)
+    app.add_middleware(NoCacheStaticMiddleware)
     app.include_router(api_router)
 
     if STATIC_DIR.exists():
