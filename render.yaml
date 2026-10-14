@@ -5,12 +5,14 @@ services:
     plan: free
     envVars:
       - key: SHEET_ID
-        value: 1j--r1edg8-_njQzHx9kBNeuy0nI9iOhapH3epCzPDXw
+        value: 1eSonYt5Fyxyune85dnnntaunvOupIzBN6eMEhFrHnU8
       - key: GID_TIMELINE
         value: "289573693"
       - key: GID_COUNT_TEAMS
         value: "208058828"
       - key: GID_ALL_BINS
         value: "91380376"
+      - key: GID_WHATS_LEFT
+        value: "1571653131"
       - key: POLL_INTERVAL_SECONDS
         value: "20"

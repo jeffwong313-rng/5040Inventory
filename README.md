@@ -1,7 +1,7 @@
 # Warehouse Inventory Dashboard
 
-A live dashboard for the 2027 inventory count, reading directly from the
-[Warehouse Map Wiegman 2027 Inventory](https://docs.google.com/spreadsheets/d/1j--r1edg8-_njQzHx9kBNeuy0nI9iOhapH3epCzPDXw)
+A live dashboard for the 2026 BONUS inventory count, reading directly from the
+[Warehouse Map Wiegman 2026 BONUS!!! Inventory](https://docs.google.com/spreadsheets/d/1eSonYt5Fyxyune85dnnntaunvOupIzBN6eMEhFrHnU8)
 Google Sheet. No manual export/import step: the server re-pulls the sheet
 every 20 seconds (configurable) and the dashboard polls the server, so any
 edit made in the sheet shows up on screen within about half a minute,
@@ -15,9 +15,14 @@ Three panels:
   section/zone it's assigned, with tabs for PreCounts / First Count /
   Variance 1 (and any further `For ...` phase you add to the sheet), plus
   a search box so someone on their phone can find their own team fast.
-- **Bin Count Progress** (bottom right) — percent of the warehouse
-  counted, broken down by warehouse, and a list of what's still left,
-  from the *All Bin Locations* tab.
+- **Zone Progress** (bottom right) — % complete from the *What's Left*
+  tab: one row per zone, **Current Status** blank = not started,
+  `Assigned` = a team is on it, `Complete` = counted. The `Team Precount` /
+  `Team Official Count` / `Team Variance 1` / `Team Variance 2` columns show
+  which round each zone is in and which team has it. Breaks down by
+  warehouse and lists everything not yet complete (assigned zones first).
+- Count Teams also shows each round's **Zones Left** column as a strip of
+  chips, plus the extra precount helpers listed under the numbered teams.
 
 Built to be readable on a TV across the room (large text, everything
 visible without scrolling on wide screens, gently auto-scrolling lists
@@ -86,8 +91,8 @@ Environment variables (all optional, defaults point at the real sheet):
 
 | Var | Default | Meaning |
 |---|---|---|
-| `SHEET_ID` | the 2027 sheet | which spreadsheet to read |
-| `GID_TIMELINE` / `GID_COUNT_TEAMS` / `GID_ALL_BINS` | current tab gids | which tab within it (if you ever rename/recreate a tab, its gid changes — grab the new one from the tab's URL) |
+| `SHEET_ID` | the 2026 BONUS sheet | which spreadsheet to read |
+| `GID_TIMELINE` / `GID_COUNT_TEAMS` / `GID_WHATS_LEFT` | current tab gids | which tab within it (if you ever rename/recreate a tab, its gid changes — grab the new one from the tab's URL) |
 | `POLL_INTERVAL_SECONDS` | `20` | how often the server re-fetches the sheet |
 | `STALE_AFTER_SECONDS` | `120` | how long since the last good fetch before the dashboard shows a "may be stale" warning |
 | `PORT` | `8000` | server port |
