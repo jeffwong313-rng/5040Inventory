@@ -1,4 +1,4 @@
-"""Fetches the three tabs we care about from the public Google Sheet as
+"""Fetches the tabs we care about from the public Google Sheet as
 CSV. The sheet must be shared "Anyone with the link can view" -- this app
 never authenticates and never writes to the sheet.
 """
@@ -11,12 +11,12 @@ import httpx
 
 from . import config
 
-TABS = ("timeline", "count_teams", "all_bins")
+TABS = ("timeline", "count_teams", "whats_left")
 
 _GIDS = {
     "timeline": config.GID_TIMELINE,
     "count_teams": config.GID_COUNT_TEAMS,
-    "all_bins": config.GID_ALL_BINS,
+    "whats_left": config.GID_WHATS_LEFT,
 }
 
 _HEADERS = {"User-Agent": "warehouse-dashboard/1.0 (+read-only sheet sync)"}

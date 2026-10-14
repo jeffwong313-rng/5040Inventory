@@ -2,7 +2,7 @@
 
 Everything is read from environment variables so the same code can run
 locally, in Docker, or on a hosting platform (Render/Railway/Fly/etc.)
-without code changes. Sensible defaults point at the real 2027 inventory
+without code changes. Sensible defaults point at the real 2026 BONUS inventory
 sheet the app was built for.
 """
 from __future__ import annotations
@@ -24,7 +24,7 @@ def _env_int(name: str, default: int) -> int:
 # CSV export endpoints below to work without authentication. The app never
 # writes to the sheet -- it only ever reads it.
 SHEET_ID = os.environ.get(
-    "SHEET_ID", "1j--r1edg8-_njQzHx9kBNeuy0nI9iOhapH3epCzPDXw"
+    "SHEET_ID", "1eSonYt5Fyxyune85dnnntaunvOupIzBN6eMEhFrHnU8"
 )
 
 # Tab (gid) ids, discovered from the sheet's own tab URLs. Override via env
@@ -32,6 +32,9 @@ SHEET_ID = os.environ.get(
 GID_TIMELINE = os.environ.get("GID_TIMELINE", "289573693")
 GID_COUNT_TEAMS = os.environ.get("GID_COUNT_TEAMS", "208058828")
 GID_ALL_BINS = os.environ.get("GID_ALL_BINS", "91380376")
+# "What's Left" tab: one row per zone with Current Status (blank /
+# Assigned / Complete) and the team per round. Drives % complete.
+GID_WHATS_LEFT = os.environ.get("GID_WHATS_LEFT", "1571653131")
 
 # How often the server re-pulls the sheet, in seconds. The dashboard polls
 # the server about this often too (see static/app.js), so this is the true

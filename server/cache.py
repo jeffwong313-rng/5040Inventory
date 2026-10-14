@@ -13,9 +13,9 @@ from typing import Optional
 import httpx
 
 from . import config
-from .parsers.bins import parse_bins
 from .parsers.count_teams import parse_count_teams, phases_to_dict
 from .parsers.timeline import parse_timeline, timeline_to_dict
+from .parsers.whats_left import parse_whats_left
 from .sheets_client import fetch_all
 
 logger = logging.getLogger("warehouse_dashboard.cache")
@@ -32,12 +32,15 @@ class Snapshot:
     bins: dict = field(
         default_factory=lambda: {
             "groups": [],
+            "rounds": [],
             "summary": {
                 "totalGroups": 0,
                 "counted": 0,
                 "inProgress": 0,
                 "notStarted": 0,
                 "percentComplete": 0.0,
+                "currentRound": None,
+                "byRound": [],
                 "byWarehouse": [],
                 "remainingGroups": [],
             },
@@ -95,7 +98,7 @@ class SheetCache:
                 count_teams = phases_to_dict(
                     parse_count_teams(raw["count_teams"])
                 )
-                bins = parse_bins(raw["all_bins"])
+                bins = parse_whats_left(raw["whats_left"])
             except Exception as exc:  # noqa: BLE001 - keep serving last good data
                 logger.warning("sheet refresh failed: %s", exc)
                 self.snapshot.last_error = str(exc)
