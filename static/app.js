@@ -214,6 +214,18 @@
 
     const filter = state.filterText.trim().toLowerCase();
 
+    const zonesLeftEl = $("zones-left");
+    const zonesLeft = phase.zonesLeft || [];
+    if (zonesLeft.length) {
+      zonesLeftEl.hidden = false;
+      zonesLeftEl.innerHTML = `<span class="zones-left-label">Zones left (${zonesLeft.length}):</span> ${zonesLeft
+        .map((z) => `<span class="zone-chip">${escapeHtml(z)}</span>`)
+        .join("")}`;
+    } else {
+      zonesLeftEl.hidden = true;
+      zonesLeftEl.innerHTML = "";
+    }
+
     const cards = phase.teams.map((t) => {
       const haystack = [
         t.teamId,
@@ -230,20 +242,21 @@
         .toLowerCase();
       const matches = !filter || haystack.includes(filter);
 
+      const notAssigned = !t.helper && !t.section && !t.zone;
       const fields = [
         t.section && ["Section", t.section],
         t.zone && ["Zone", t.zone],
-        t.zonesLeft && ["Zones left", t.zonesLeft],
         t.countTeam && ["Hands off to", t.countTeam],
         t.notes && ["Notes", t.notes],
         t.mfr && t.mfr.length ? ["MFR", t.mfr.join(", ")] : null,
       ].filter(Boolean);
 
       return `
-        <div class="team-card${matches ? "" : " dimmed"}">
+        <div class="team-card${t.helper ? " helper" : ""}${matches ? "" : " dimmed"}">
           <div class="team-id">${escapeHtml(t.teamId)}</div>
           <div class="team-members">${escapeHtml((t.members || []).join(" & ") || "Unassigned")}</div>
           ${fields.map(([label, val]) => `<div class="team-field"><b>${escapeHtml(label)}:</b> ${escapeHtml(val)}</div>`).join("")}
+          ${notAssigned ? '<div class="team-field unassigned">Not assigned yet</div>' : ""}
         </div>`;
     });
 
@@ -276,11 +289,30 @@
     $("ring-value").style.strokeDashoffset = String(offset);
 
     $("bins-stats").innerHTML = `
-      <div class="stat-counted"><div class="stat-value">${summary.counted}</div><div class="stat-label">Counted</div></div>
-      <div class="stat-progress"><div class="stat-value">${summary.inProgress}</div><div class="stat-label">In progress</div></div>
+      <div class="stat-counted"><div class="stat-value">${summary.counted}</div><div class="stat-label">Complete</div></div>
+      <div class="stat-progress"><div class="stat-value">${summary.inProgress}</div><div class="stat-label">Assigned</div></div>
       <div class="stat-remaining"><div class="stat-value">${summary.notStarted}</div><div class="stat-label">Not started</div></div>
-      <div class="stat-total"><div class="stat-value">${summary.totalGroups}</div><div class="stat-label">Total sections</div></div>
+      <div class="stat-total"><div class="stat-value">${summary.totalGroups}</div><div class="stat-label">Total zones</div></div>
     `;
+
+    const roundBadge = $("current-round");
+    if (summary.currentRound) {
+      roundBadge.hidden = false;
+      roundBadge.textContent = `Round: ${summary.currentRound}`;
+    } else {
+      roundBadge.hidden = true;
+    }
+
+    const total = summary.totalGroups || 0;
+    $("bins-rounds").innerHTML = (summary.byRound || [])
+      .map(
+        (r) => `
+        <div class="round-chip${r.round === summary.currentRound ? " active" : ""}${r.zones === 0 ? " idle" : ""}">
+          <span class="round-name">${escapeHtml(r.round)}</span>
+          <span class="round-count">${r.zones}/${total} zones</span>
+        </div>`
+      )
+      .join("");
 
     $("bins-by-warehouse").innerHTML = (summary.byWarehouse || [])
       .map(
@@ -295,13 +327,15 @@
     const remaining = summary.remainingGroups || [];
     const remainingEl = $("remaining-scroll");
     if (remaining.length === 0) {
-      remainingEl.innerHTML = '<p class="empty-state">Everything is counted 🎉</p>';
+      remainingEl.innerHTML = '<p class="empty-state">Every zone is complete 🎉</p>';
     } else {
       remainingEl.innerHTML = `<div class="remaining-list">${remaining
         .map(
           (g) => `
           <div class="remaining-row">
-            <span>${escapeHtml(g.group)} <span class="empty-state">(${escapeHtml(g.warehouse)})</span></span>
+            <span class="remaining-zone">${escapeHtml(g.group)}${
+              g.team ? ` <span class="remaining-meta">${escapeHtml(g.round || "")} · ${escapeHtml(g.team)}</span>` : ""
+            }</span>
             <span class="status-pill ${g.status}">${statusLabel(g.status)}</span>
           </div>`
         )
@@ -312,8 +346,8 @@
 
   function statusLabel(status) {
     switch (status) {
-      case "counted": return "Counted";
-      case "in_progress": return "In progress";
+      case "counted": return "Complete";
+      case "in_progress": return "Assigned";
       default: return "Not started";
     }
   }

@@ -51,14 +51,16 @@
           />
         </div>
         <div class="phase-tabs" id="phase-tabs"></div>
+        <div class="zones-left" id="zones-left" hidden></div>
         <div class="teams-scroll" id="teams-scroll">
           <p class="empty-state">Loading teams…</p>
         </div>
       </section>
 
-      <section class="panel panel-bins" id="bins-panel" aria-label="Bin count progress">
+      <section class="panel panel-bins" id="bins-panel" aria-label="Zone progress">
         <div class="panel-head">
-          <h2>Bin Count Progress</h2>
+          <h2>Zone Progress</h2>
+          <span id="current-round" class="round-badge" hidden></span>
         </div>
 
         <div class="bins-summary" id="bins-summary">
@@ -69,12 +71,14 @@
             </svg>
             <div class="ring-label">
               <span id="percent-complete">0%</span>
-              <small>counted</small>
+              <small>complete</small>
             </div>
           </div>
 
           <div class="bins-stats" id="bins-stats"></div>
         </div>
+
+        <div class="bins-rounds" id="bins-rounds"></div>
 
         <div class="bins-detail">
           <div class="bins-by-warehouse" id="bins-by-warehouse"></div>

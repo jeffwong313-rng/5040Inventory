@@ -240,6 +240,19 @@ html, body {
 .team-card .team-field { font-size: 1em; color: var(--text-dim); margin-top: 4px; }
 .team-card .team-field b { color: var(--text); font-weight: 600; }
 .team-card.dimmed { opacity: 0.3; }
+.team-card.helper { border-style: dashed; }
+.team-card.helper .team-id { color: var(--blue); }
+.team-card .team-field.unassigned { font-style: italic; }
+
+.zones-left {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  margin-bottom: 12px; font-size: 0.9em;
+}
+.zones-left-label { color: var(--text-dim); font-weight: 600; margin-right: 2px; }
+.zone-chip {
+  background: #3a2f12; color: var(--warn);
+  border-radius: 999px; padding: 3px 10px; font-weight: 600; font-size: 0.92em;
+}
 
 /* ---------- bins ---------- */
 
@@ -281,6 +294,25 @@ html, body {
 .bins-stats .stat-progress .stat-value { color: var(--warn); }
 .bins-stats .stat-remaining .stat-value { color: var(--text); }
 .bins-stats .stat-label { color: var(--text-dim); font-size: 0.85em; }
+
+.round-badge {
+  background: var(--accent); color: var(--bg);
+  border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 0.85em;
+}
+
+.bins-rounds { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.round-chip {
+  display: flex; flex-direction: column;
+  background: var(--panel-alt); border: 1px solid var(--border);
+  border-radius: 8px; padding: 5px 10px; font-size: 0.8em; flex: 1 1 90px;
+}
+.round-chip .round-name { font-weight: 600; }
+.round-chip .round-count { color: var(--text-dim); font-size: 0.9em; }
+.round-chip.active { border-color: var(--accent); }
+.round-chip.active .round-name { color: var(--accent); }
+.round-chip.idle { opacity: 0.5; }
+
+.remaining-meta { color: var(--text-dim); font-size: 0.88em; margin-left: 6px; }
 
 .bins-detail { display: flex; flex-direction: column; gap: 12px; min-height: 0; flex: 1; }
 
