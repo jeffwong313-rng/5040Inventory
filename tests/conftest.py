@@ -24,3 +24,8 @@ def count_teams_csv() -> str:
 @pytest.fixture
 def all_bins_csv() -> str:
     return _read("all_bins.csv")
+
+
+@pytest.fixture
+def whats_left_csv() -> str:
+    return _read("whats_left.csv")

@@ -20,8 +20,9 @@ def test_first_count_maps_zone_and_zones_left(count_teams_csv):
     first_count = phases[1]
     team1 = next(t for t in first_count.teams if t.team_id == "Team1")
     assert team1.zone == "WH1-YELLOW, WH1-RED-A"
-    assert team1.zones_left == "WH1-BLUE-C"
     assert team1.count_team == "Team 3"
+    # Zones Left is collected for the whole round, not per team
+    assert first_count.zones_left == ["WH1-BLUE-C", "WH1-BLUE-D"]
 
 
 def test_skips_stray_annotation_row_before_header(count_teams_csv):
@@ -43,3 +44,25 @@ def test_skips_instructional_row_before_header(count_teams_csv):
 
 def test_unknown_input_returns_no_phases():
     assert parse_count_teams("a,b,c\n1,2,3\n") == []
+
+
+def test_real_2026_sheet_shape():
+    from tests.conftest import _read
+    from server.parsers.count_teams import parse_count_teams, phases_to_dict
+
+    phases = {p["title"]: p for p in phases_to_dict(parse_count_teams(_read("count_teams_2026.csv")))}
+    pre = phases["For PreCounts"]
+    helpers = [t for t in pre["teams"] if t["helper"]]
+    assert len(helpers) == 1
+    assert helpers[0]["members"] == ["David from Ironridge", "Yohan from Pegasus", "Grace"]
+    assert len([t for t in pre["teams"] if not t["helper"]]) == 3
+
+    first = phases["For First Count"]
+    # Zones Left is a round-level list, including the row past the last team
+    assert first["zonesLeft"] == ["WH1-GREEN-A", "WH1-GREEN-D", "WH1-GREEN-E", "WH1-GREEN-N"]
+    assert all(t["zonesLeft"] is None for t in first["teams"])
+    assert first["teams"][0]["zone"] == "WH1-YELLOW, WH1-RED-A"
+
+    variance = phases["For Variance 1"]
+    assert len(variance["teams"]) == 2
+    assert variance["teams"][0]["zone"] is None
