@@ -70,6 +70,7 @@ class TeamRow:
     count_team: Optional[str] = None
     mfr: List[str] = field(default_factory=list)
     extra: Dict[str, str] = field(default_factory=dict)
+    helper: bool = False
 
 
 @dataclass
@@ -78,6 +79,9 @@ class Phase:
     description: str = ""
     columns: List[str] = field(default_factory=list)
     teams: List[TeamRow] = field(default_factory=list)
+    # The sheet's "Zones Left" column is a standalone list for the whole
+    # round (it even runs past the last team row), not a per-team value.
+    zones_left: List[str] = field(default_factory=list)
 
 
 def _classify_header(col_index: int, header_text: str) -> Optional[str]:
@@ -136,6 +140,31 @@ def parse_count_teams(csv_text: str) -> List[Phase]:
             # "YARD" note) -- skip it and keep waiting for the header
             continue
 
+        # Collect this round's "Zones Left" list from any row (team or not)
+        for idx, field_name in header_map.items():
+            if field_name == "zones_left":
+                val = cell(row, idx).strip()
+                if val:
+                    current.zones_left.append(val)
+
+        if not TEAM_ID_RE.match(team_id) and current.teams:
+            members = [
+                cell(row, idx).strip()
+                for idx, f in header_map.items()
+                if f.startswith("member") and cell(row, idx).strip()
+            ]
+            if team_id and members:
+                # e.g. "PRECOUNTS | David from Ironridge | Yohan from Pegasus"
+                # -- extra helpers listed under the numbered teams.
+                current.teams.append(
+                    TeamRow(team_id=team_id.title(), members=members, helper=True)
+                )
+                continue
+            if not team_id and members and current.teams[-1].helper:
+                # continuation row, e.g. a lone "Grace" under the helpers
+                current.teams[-1].members.extend(members)
+                continue
+
         if TEAM_ID_RE.match(team_id):
             data = TeamRow(team_id=team_id)
             for idx, field_name in header_map.items():
@@ -144,6 +173,8 @@ def parse_count_teams(csv_text: str) -> List[Phase]:
                     continue
                 if field_name.startswith("member"):
                     data.members.append(val)
+                elif field_name == "zones_left":
+                    continue  # collected per-round above
                 elif field_name == "mfr":
                     data.mfr.append(val)
                 elif field_name in {
@@ -173,6 +204,7 @@ def phases_to_dict(phases: List[Phase]) -> list:
             "title": p.title,
             "description": p.description,
             "columns": p.columns,
+            "zonesLeft": p.zones_left,
             "teams": [
                 {
                     "teamId": t.team_id,
@@ -184,6 +216,7 @@ def phases_to_dict(phases: List[Phase]) -> list:
                     "countTeam": t.count_team,
                     "mfr": t.mfr,
                     "extra": t.extra,
+                    "helper": t.helper,
                 }
                 for t in p.teams
             ],
