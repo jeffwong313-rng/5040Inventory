@@ -11,7 +11,7 @@
   --danger: #ff6b6b;
   --blue: #5aa9ff;
   --radius: 14px;
-  --gap: 16px;
+  --gap: 10px;
   --font-scale: 1;
 }
 
@@ -39,7 +39,7 @@ html, body {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  padding: 22px 28px;
+  padding: 8px 20px;
   border-bottom: 1px solid var(--border);
   gap: 16px;
 }
@@ -69,10 +69,16 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
+.header-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .sync-status {
   display: flex;
   align-items: center;
-  justify-self: end;
   gap: 8px;
   font-size: 0.85em;
   color: var(--text-dim);
@@ -122,7 +128,7 @@ html, body {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px 18px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -134,7 +140,7 @@ html, body {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 .panel-head h2 { margin: 0; font-size: 1.05em; letter-spacing: 0.3px; color: var(--text); }
 .panel-bins .panel-head h2 { font-size: 1.15em; }
@@ -149,8 +155,9 @@ html, body {
   .layout {
     grid-template-columns: 2fr 1fr;
     grid-template-rows: auto 1fr;
-    height: calc(100vh - 84px); /* fit a TV/kiosk screen without page scroll */
+    height: auto; /* fills what's left under the header: no page scroll on a TV */
   }
+  .app { height: 100vh; }
   .panel-timeline { grid-column: 1 / -1; grid-row: 1; max-height: 220px; }
   .panel-teams { grid-column: 1; grid-row: 2; }
   .panel-bins { grid-column: 2; grid-row: 2; }
@@ -162,7 +169,7 @@ html, body {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 4px 2px 8px;
+  padding: 2px 2px 4px;
 }
 
 .timeline-item {
@@ -171,7 +178,7 @@ html, body {
   background: var(--panel-alt);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   position: relative;
 }
 .timeline-item.now {
@@ -203,9 +210,9 @@ html, body {
 .companion-qr {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 0 0 auto;
-  padding: 8px 14px 8px 8px;
+  padding: 5px 12px 5px 5px;
   background: var(--panel-alt);
   border: 1px solid var(--accent-dim);
   border-radius: 12px;
@@ -213,24 +220,25 @@ html, body {
   text-decoration: none;
 }
 .companion-qr img {
-  width: 104px;
-  height: 104px;
+  width: 72px;
+  height: 72px;
   border-radius: 6px;
   background: #fff;
   display: block;
 }
-.companion-qr span { display: flex; flex-direction: column; gap: 4px; max-width: 120px; font-size: 0.95em; line-height: 1.25; color: var(--text-dim); }
-.companion-qr b { color: var(--accent); font-size: 1.2em; }
+.companion-qr span { display: flex; flex-direction: column; gap: 4px; max-width: 90px; font-size: 0.85em; line-height: 1.25; color: var(--text-dim); }
+.companion-qr b { color: var(--accent); font-size: 1.25em; }
 @media (max-width: 700px) {
   /* on a phone you're already on a phone: keep it small */
-  .companion-qr img { width: 64px; height: 64px; }
+  .companion-qr img { width: 56px; height: 56px; }
+  .header-right { justify-self: center; }
 }
 
 .phase-tabs {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .phase-tab {
   background: var(--panel-alt);
@@ -253,7 +261,7 @@ html, body {
 .team-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
 .team-card {
@@ -398,7 +406,6 @@ html, body {
   .brand h1 { font-size: 1.4em; }
   .header-datetime { justify-self: center; gap: 12px; }
   .header-date, .header-clock { font-size: 1.1em; }
-  .sync-status { justify-self: center; }
 }
 
 @media (max-width: 480px) {
