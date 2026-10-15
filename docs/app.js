@@ -1,0 +1,332 @@
+// Count Team Companion: pick your team -> see your assignment for each round
+// -> open the map with your zones lit up. Reads the inventory Google Sheet
+// directly (it is shared "anyone with the link can view"), so it needs no
+// server of its own and runs fine on GitHub Pages.
+import {
+  parseCountTeams, parseTeamSpecific, teamList, findTeam,
+  parseAssignment, resolveSpecs, resolveMfrs, assignmentText,
+} from "./zones.js";
+import { MapView } from "./map.js";
+
+const CONFIG = {
+  sheetId: "1eSonYt5Fyxyune85dnnntaunvOupIzBN6eMEhFrHnU8",
+  gidCountTeams: "208058828",
+  gidTeamSpecific: "293732955",
+  refreshMs: 30000,
+};
+const csvUrl = (gid) =>
+  `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/export?format=csv&gid=${gid}`;
+
+const state = {
+  phases: [],
+  specific: {},
+  teams: [],
+  map: null,
+  phaseIdx: 0,
+  lastSync: 0,
+  error: null,
+  mapView: null,
+  mapKey: null,
+  whKey: null,
+};
+
+const $app = document.getElementById("app");
+const esc = (s) =>
+  String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* private mode */ } },
+};
+
+/* ------------------------------------------------------------ data */
+
+async function fetchText(url) {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.text();
+}
+
+async function loadSheet() {
+  try {
+    const [ct, ts] = await Promise.all([
+      fetchText(csvUrl(CONFIG.gidCountTeams)),
+      fetchText(csvUrl(CONFIG.gidTeamSpecific)).catch(() => ""),
+    ]);
+    state.phases = parseCountTeams(ct);
+    state.specific = ts ? parseTeamSpecific(ts) : {};
+    state.teams = teamList(state.phases, state.specific);
+    state.lastSync = Date.now();
+    state.error = null;
+  } catch (e) {
+    state.error = e;
+  }
+}
+
+async function loadMap() {
+  if (state.map) return state.map;
+  try {
+    state.map = await fetch("data/map.json").then((r) => r.json());
+  } catch {
+    state.map = { tabs: [] };
+  }
+  return state.map;
+}
+
+/* ---------------------------------------------------------- routing */
+
+function route() {
+  const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).map(decodeURIComponent);
+  return { team: parts[0] || null, view: parts[1] || "home" };
+}
+const go = (hash) => { if (location.hash !== hash) location.hash = hash; else render(); };
+
+function phaseLabel(p) {
+  const n = p.name.replace(/^precounts?$/i, "PreCounts");
+  return n;
+}
+
+/* ---------------------------------------------------------- screens */
+
+function syncBadge() {
+  const age = state.lastSync ? Math.round((Date.now() - state.lastSync) / 1000) : null;
+  const stale = state.error || age == null || age > 120;
+  const label = state.error && !state.lastSync ? "Offline" : age == null ? "…" : age < 10 ? "Live" : `${age < 60 ? age + "s" : Math.round(age / 60) + "m"} ago`;
+  return `<span class="sync ${stale ? "stale" : ""}" id="sync"><span class="dot"></span>${label}</span>`;
+}
+
+function renderPicker() {
+  const cards = state.teams.map((id) => {
+    const p0 = state.phases.find((p) => findTeam(p, id));
+    const t = p0 && findTeam(p0, id);
+    return `<button class="team-pick" data-team="${esc(id)}">
+      <span class="id">${esc(id)}</span>
+      <span class="who">${esc(t ? t.members.join(", ") : "")}</span>
+    </button>`;
+  }).join("");
+  $app.innerHTML = `
+    <header class="bar"><h1>Inventory Count</h1>${syncBadge()}</header>
+    <main class="page">
+      <div class="hero"><h2>Which team are you on?</h2><p>Tap your team. This phone will remember it.</p></div>
+      ${state.teams.length ? `<div class="team-grid">${cards}</div>` : errorOrEmpty()}
+    </main>`;
+  $app.querySelectorAll("[data-team]").forEach((b) =>
+    b.addEventListener("click", () => {
+      store.set("team", b.dataset.team);
+      go(`#/${encodeURIComponent(b.dataset.team)}`);
+    }));
+}
+
+function errorOrEmpty() {
+  if (state.error) return `<div class="error-box"><b>Can't reach the sheet right now.</b>Check your signal. It will keep retrying.</div>`;
+  return `<div class="error-box">No teams found yet.</div>`;
+}
+
+function phaseSeg() {
+  if (!state.phases.length) return "";
+  return `<div class="seg" role="group" aria-label="Count round">${state.phases.map((p, i) =>
+    `<button data-phase="${i}" aria-pressed="${i === state.phaseIdx}">${esc(phaseLabel(p))}</button>`).join("")}</div>`;
+}
+
+function bindPhaseSeg(after) {
+  $app.querySelectorAll("[data-phase]").forEach((b) =>
+    b.addEventListener("click", () => {
+      state.phaseIdx = +b.dataset.phase;
+      store.set("phase", String(state.phaseIdx));
+      after();
+    }));
+}
+
+function renderTeam(teamId) {
+  const phase = state.phases[state.phaseIdx];
+  const t = findTeam(phase, teamId);
+  const anyT = state.phases.map((p) => findTeam(p, teamId)).find(Boolean);
+  const spec = state.specific[teamId.toLowerCase()] || {};
+  const members = (t || anyT)?.members || [];
+
+  const assignment = t ? [t.zone, t.section].filter(Boolean).join(", ") : "";
+  const mfrMain = !assignment && t?.mfr?.length;
+  const kind = mfrMain ? "Manufacturers" : t?.zone != null ? "Zone" : "Section";
+  const fields = [];
+  if (t?.notes) fields.push(["Notes", esc(t.notes)]);
+  if (t?.countTeam) fields.push(["Hands off to", esc(t.countTeam)]);
+  if (t?.mfr?.length && !mfrMain) fields.push(["MFR", `<div class="chips">${t.mfr.map((m) => `<span class="chip">${esc(m)}</span>`).join("")}</div>`]);
+  for (const [k, v] of Object.entries(t?.extra || {})) fields.push([esc(k), esc(v)]);
+  if (spec.mapSection) fields.push(["Map section", esc(spec.mapSection)]);
+  for (const [k, v] of Object.entries(spec.extra || {})) fields.push([esc(k), esc(v)]);
+
+  const roles = [
+    spec.counter && `<span class="role"><b>Counter</b>${esc(spec.counter)}</span>`,
+    spec.recorder && `<span class="role"><b>Recorder</b>${esc(spec.recorder)}</span>`,
+  ].filter(Boolean).join("");
+
+  const zl = phase?.zonesLeft || [];
+  const mainLine = assignment
+    ? `<p class="assign">${esc(assignment)}</p>`
+    : t?.mfr?.length
+      ? `<p class="assign">${esc(t.mfr.join(", "))}</p>`
+      : `<p class="assign none">Nothing assigned for this round yet. Check back. This page updates on its own.</p>`;
+
+  $app.innerHTML = `
+    <header class="bar">
+      <button class="back" id="switch">← Teams</button>
+      <h1>${esc(teamId)}</h1>${syncBadge()}
+    </header>
+    <main class="page">
+      <section class="team-head">
+        <h2>${esc(teamId)}</h2>
+        <p class="members">${members.length ? esc(members.join(" · ")) : "Members not listed yet"}</p>
+        ${roles ? `<div class="roles">${roles}</div>` : ""}
+      </section>
+      ${phaseSeg()}
+      <section class="card">
+        <h3>${esc(phase ? phaseLabel(phase) : "Assignment")} · ${kind}</h3>
+        ${phase?.description ? `<p class="desc">${esc(phase.description)}</p>` : ""}
+        ${mainLine}
+        ${fields.map(([k, v]) => `<div class="field"><b>${k}</b><span>${v}</span></div>`).join("")}
+      </section>
+      <button class="map-btn" id="open-map">🗺️ Open map</button>
+      ${zl.length ? `<section class="card"><h3>Zones left this round (${zl.length})</h3><div class="chips">${zl.map((z) => `<span class="chip">${esc(z)}</span>`).join("")}</div></section>` : ""}
+      <p class="foot">Updates live from the inventory sheet.</p>
+    </main>`;
+  document.getElementById("switch").onclick = () => { store.set("team", null); go("#/"); };
+  document.getElementById("open-map").onclick = () => go(`#/${encodeURIComponent(teamId)}/map`);
+  bindPhaseSeg(() => renderTeam(teamId));
+}
+
+function resolveFor(teamId) {
+  const phase = state.phases[state.phaseIdx];
+  const t = findTeam(phase, teamId);
+  const spec = state.specific[teamId.toLowerCase()];
+  const text = assignmentText(t, spec);
+  if (text) return { text, ...resolveSpecs(parseAssignment(text), state.map) };
+  if (t?.mfr?.length) return { text: t.mfr.join(", "), ...resolveMfrs(t.mfr, state.map) };
+  return { text: "", byTab: {}, exact: {}, whole: new Set(), report: [] };
+}
+
+function renderMap(teamId) {
+  const map = state.map;
+  const res = resolveFor(teamId);
+  const litFor = (key) => (res.whole.has(key) ? null : res.byTab[key] || new Set());
+  const hasAny = (key) => res.whole.has(key) || (res.byTab[key] && res.byTab[key].size > 0);
+  const key = `${teamId}|${state.phaseIdx}|${res.text}`;
+  const changed = key !== state.mapKey;
+  if (changed || !map.tabs.some((t) => t.key === state.whKey)) {
+    state.whKey = (map.tabs.find((t) => hasAny(t.key)) || map.tabs[0] || {}).key;
+  }
+
+  const legend = res.report.length
+    ? `<div>Your ${res.report.some((r) => r.mfr) ? "manufacturers" : "zones"}:</div><div class="chips">${res.report.map((r) =>
+        `<span class="chip ${!r.found ? "miss" : r.approx ? "approx" : ""}" title="${!r.found ? "Not found on the map" : r.approx ? "Shown as the whole colour area" : ""}">${esc(r.label)}${!r.found ? " (not on map)" : r.approx ? " ≈" : ""}</span>`).join("")}</div>`
+    : `<div>No zones for this round yet, so the whole map is shown.</div>`;
+
+  $app.innerHTML = `
+    <div class="map-page">
+      <header class="bar">
+        <button class="back" id="back">← ${esc(teamId)}</button>
+        <h1>Map</h1>${syncBadge()}
+      </header>
+      <div class="map-controls">
+        ${phaseSeg()}
+        <div class="wh-tabs" role="group" aria-label="Warehouse">${map.tabs.map((t) =>
+          `<button data-wh="${esc(t.key)}" class="${hasAny(t.key) ? "has" : ""}" aria-pressed="${t.key === state.whKey}">${esc(t.name)}</button>`).join("")}</div>
+      </div>
+      <div class="map-stage" id="stage">
+        <div class="zoom-tools">
+          <button id="zin" aria-label="Zoom in">+</button>
+          <button id="zout" aria-label="Zoom out">−</button>
+          <button id="zmine" class="wide" aria-label="Zoom to my zones">Mine</button>
+          <button id="zall" class="wide" aria-label="Show whole map">All</button>
+        </div>
+      </div>
+      <div class="map-legend">${legend}</div>
+    </div>`;
+
+  document.getElementById("back").onclick = () => go(`#/${encodeURIComponent(teamId)}`);
+  bindPhaseSeg(() => renderMap(teamId));
+  $app.querySelectorAll("[data-wh]").forEach((b) =>
+    b.addEventListener("click", () => { state.whKey = b.dataset.wh; state.mapKey = null; renderMap(teamId); state.mapKey = key; }));
+
+  const stage = document.getElementById("stage");
+  const tab = map.tabs.find((t) => t.key === state.whKey);
+  if (!tab) { stage.insertAdjacentHTML("beforeend", `<div class="map-empty">The map hasn't been generated yet.</div>`); return; }
+  const prevView = !changed && state.mapView && state.mapView.tab === tab ? { ...state.mapView.view } : null;
+  if (state.mapView) state.mapView.destroy();
+  const mv = new MapView(stage);
+  stage.insertBefore(mv.svg, stage.firstChild);
+  const lit = litFor(tab.key);
+  mv.render(tab, lit);
+  state.mapView = mv;
+  const precise = res.exact && res.exact[tab.key] && res.exact[tab.key].size ? res.exact[tab.key] : lit;
+  const box = precise && precise.size ? mv.litBox(precise) : null;
+  const fitMine = (animate) => (box ? mv.fit(box, { animate }) : mv.fitWhole(animate));
+  requestAnimationFrame(() => {
+    if (prevView) { mv.view = prevView; mv._apply(); return; }
+    mv.fitWhole(false);
+    setTimeout(() => fitMine(true), box ? 350 : 0);
+  });
+  document.getElementById("zin").onclick = () => mv.zoomBy(1.5);
+  document.getElementById("zout").onclick = () => mv.zoomBy(1 / 1.5);
+  document.getElementById("zmine").onclick = () => fitMine(true);
+  document.getElementById("zall").onclick = () => mv.fitWhole(true);
+  if (!hasAny(tab.key) && res.report.length) {
+    stage.insertAdjacentHTML("beforeend", `<div class="map-empty">None of your zones are in ${esc(tab.name)}. Look for the green dot on the other tabs.</div>`);
+  }
+  state.mapKey = key;
+}
+
+/* ------------------------------------------------------------ main */
+
+let lastRendered = "";
+function render() {
+  const r = route();
+  if (!r.team) {
+    const saved = store.get("team");
+    if (saved && state.teams.includes(saved)) { location.replace(`#/${encodeURIComponent(saved)}`); return; }
+    lastRendered = "picker";
+    return renderPicker();
+  }
+  const teamId = state.teams.find((t) => t.toLowerCase() === r.team.toLowerCase()) || r.team;
+  if (r.view === "map") {
+    loadMap().then(() => { lastRendered = "map"; renderMap(teamId); });
+    return;
+  }
+  lastRendered = "team";
+  renderTeam(teamId);
+}
+
+function refreshSyncBadge() {
+  const el = document.getElementById("sync");
+  if (el) el.outerHTML = syncBadge();
+}
+
+async function tick() {
+  const before = JSON.stringify([state.phases, state.specific]);
+  await loadSheet();
+  const after = JSON.stringify([state.phases, state.specific]);
+  if (before !== after) {
+    // don't rebuild the map (and lose the user's zoom) unless their data changed
+    if (lastRendered === "map") {
+      const r = route();
+      const teamId = state.teams.find((t) => t.toLowerCase() === (r.team || "").toLowerCase()) || r.team;
+      const res = resolveFor(teamId);
+      if (`${teamId}|${state.phaseIdx}|${res.text}` !== state.mapKey) render();
+    } else render();
+  }
+  refreshSyncBadge();
+}
+
+async function start() {
+  const p = parseInt(store.get("phase") || "0", 10);
+  state.phaseIdx = isNaN(p) ? 0 : p;
+  await loadSheet();
+  if (state.phaseIdx >= state.phases.length) state.phaseIdx = 0;
+  window.addEventListener("hashchange", render);
+  render();
+  loadMap();
+  setInterval(() => { if (!document.hidden) tick(); }, CONFIG.refreshMs);
+  setInterval(refreshSyncBadge, 5000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+}
+
+start();
