@@ -2,12 +2,15 @@ name: Refresh companion map
 
 # Rebuilds docs/data/map.json (the picture of the warehouse used by the
 # companion site) from the map tabs of the inventory Google Sheet.
-# Runs daily, whenever the extractor changes, and on demand from the
-# Actions tab ("Run workflow").
+# Runs daily (about 5:15 AM and 9:20 AM Pacific), whenever the extractor or
+# this file changes, and on demand from the Actions tab ("Run workflow").
 on:
   workflow_dispatch:
   schedule:
     - cron: "17 12 * * *"
+    # 9:20 AM PDT, so the map is fresh before the 10 AM start
+    # (GitHub often starts scheduled runs 5-20 minutes late)
+    - cron: "20 16 * * *"
   push:
     branches: [main]
     paths:
