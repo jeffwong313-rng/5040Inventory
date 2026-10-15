@@ -21,7 +21,7 @@ const SHEET_ID =
 const TABS = [
   { key: "WH1", name: "Warehouse 1", tab: "Main Warehouse", gid: "0", crop: { maxY: 1270 } },
   { key: "WH2", name: "Warehouse 2", tab: "Warehouse 2", gid: "1903736930", crop: { maxX: 1610 } },
-  { key: "WH3", name: "Warehouse 3", tab: "Warehouse 3", gid: "37419945", crop: {} },
+  { key: "WH3", name: "Warehouse 3", tab: "Warehouse 3", gid: "37419945", crop: { minX: 200 } },
   { key: "YARD", name: "Yard", tab: "Yard and Containers", gid: "2015963818", crop: {} },
 ];
 
