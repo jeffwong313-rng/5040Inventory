@@ -93,8 +93,9 @@ GitHub Pages from the `docs/` folder. It doesn't use Render at all, so it
 works even while the free Render instance is asleep.
 
 - **Pick your team.** No login. The phone remembers the choice ("← Teams" switches).
-- **Team screen:** members, Counter/Recorder (from the *Team Specific* tab),
-  and the assignment for PreCounts / First Count / Variance 1, read live
+- **Team screen:** members, a **Roles & login** card (from the *Team
+  Specific* tab: Counter, Recorder and 3rd Teammate side by side, each with
+  the role description, plus the team's username/password), and the assignment for PreCounts / First Count / Variance 1, read live
   from *Count Teams* every 30 seconds.
 - **Map:** a picture of the Main Warehouse / Warehouse 2 / Warehouse 3 /
   Yard tabs. Everything is muted except the team's zones, and it zooms to
@@ -113,9 +114,14 @@ After editing a map tab, run it right away from the repo's *Actions* tab
 → *Refresh companion map* → *Run workflow*. Its commits say
 `[skip render]`, so they don't redeploy the dashboard.
 
-Team Specific tab columns used: `Team Name`, `Counter`, `Recorder`,
-`Map Section`. Map Section is used for the map when a round has no zone
-for that team. Any extra columns you add are shown on the team screen.
+Team Specific tab columns used (matched by name, any order): `Team Name`,
+`Counter`, `Recorder`, `3rd Teammate`, `Login`, `Map Section`. Text in
+parentheses in a header, e.g. `Counter (actively moving boxes…)`, is shown
+as that role's description, so edit the header to change it. `Login` fills
+both Username and Password (the sheet uses the same value for both). First
+names are expanded to the full name from *Count Teams* when it's unambiguous.
+Map Section is used for the map when a round has no zone for that team. Any
+extra columns you add are shown on the team screen.
 
 Tests: `node --test docs/tests/zones.test.mjs`
 
