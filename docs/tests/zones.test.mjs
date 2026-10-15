@@ -5,7 +5,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import {
-  parseCountTeams, parseTeamSpecific, teamList, findTeam,
+  parseCountTeams, parseTeamSpecific, teamList, findTeam, fullName, splitHeader,
   parseAssignment, resolveSpecs, resolveMfrs, colorFamily,
 } from "../zones.js";
 
@@ -27,12 +27,29 @@ test("parses the three rounds of Count Teams", () => {
 
 test("Team Specific roles and team list", () => {
   const spec = parseTeamSpecific(fx("team_specific.csv"));
-  assert.equal(spec.team1.counter, "Archie Cole");
-  assert.equal(spec.team1.recorder, "Frank Gallagher");
+  assert.equal(spec.team1.counter, "Archie");
+  assert.equal(spec.team1.recorder, "Frank");
+  assert.deepEqual(spec.team1.login, { username: "FG", password: "FG" });
+  assert.equal(spec.team7.third, "Patrick");
+  assert.equal(spec.team1.third, "");
+  assert.equal(spec.team1.roles.counter.label, "Counter");
+  assert.match(spec.team1.roles.counter.desc, /^actively moving boxes/);
+  assert.match(spec.team1.roles.recorder.desc, /scanner$/);
+  assert.deepEqual(spec.team1.extra, {});
   const teams = teamList(parseCountTeams(fx("count_teams.csv")), spec);
   assert.equal(teams[0], "Team1");
   assert.equal(teams[teams.length - 1], "Team12");
   assert.ok(!teams.includes("Precounts"));
+});
+
+test("role names expand to full names from Count Teams", () => {
+  const phases = parseCountTeams(fx("count_teams.csv"));
+  const members = phases.flatMap((p) => findTeam(p, "Team1")?.members || []);
+  assert.equal(fullName("Archie", members), "Archie Cole");
+  assert.equal(fullName("Mario", ["Mario Sanchez*"]), "Mario Sanchez");
+  assert.equal(fullName("Patrick", ["Patrick"]), "Patrick");
+  assert.equal(fullName("Zed", members), "Zed");
+  assert.deepEqual(splitHeader("Login (user pass the same)"), { label: "Login", desc: "user pass the same" });
 });
 
 test("assignment text shapes used in the sheet", () => {
