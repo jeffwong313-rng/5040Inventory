@@ -118,6 +118,20 @@ function titleCase(s) {
 /* -------------------------------------------------------- Team Specific */
 
 /** "Team Name | Counter | Recorder | Map Section" -> {Team1: {counter, recorder, mapSection, extra}} */
+/** Splits a header like "Counter (moves boxes, calls out numbers)" into
+ *  { label: "Counter", desc: "moves boxes, calls out numbers" }. */
+export function splitHeader(h) {
+  const m = String(h || "").trim().match(/^([^(]*?)\s*\((.*)\)\s*$/s);
+  return m ? { label: m[1].trim(), desc: m[2].trim() } : { label: String(h || "").trim(), desc: "" };
+}
+
+/**
+ * Team Specific tab: one row per team with Counter / Recorder / 3rd Teammate
+ * and the team login. Columns are found by name, so order doesn't matter, and
+ * any text in parentheses in a header is kept as that role's description.
+ * Returns {team1: {counter, recorder, third, login: {username, password},
+ * roles: {counter: {label, desc}, ...}, extra}, ...}.
+ */
 export function parseTeamSpecific(csvText) {
   const rows = parseCSV(csvText);
   const out = {};
@@ -128,23 +142,48 @@ export function parseTeamSpecific(csvText) {
   const iTeam = col(/^team\s*name$/i);
   const iCounter = col(/^counter/i);
   const iRecorder = col(/^recorder/i);
+  const iThird = col(/^(3rd|third)\b|^team\s*mate\s*3|^teammate\s*3/i);
+  const iLogin = col(/^login|user\s*name|^username/i);
   const iMap = col(/map\s*section/i);
+  const used = [iTeam, iCounter, iRecorder, iThird, iLogin, iMap];
+  const roleInfo = (i, fallback) => (i >= 0 ? { ...splitHeader(head[i]) } : { label: fallback, desc: "" });
+  const roles = {
+    counter: roleInfo(iCounter, "Counter"),
+    recorder: roleInfo(iRecorder, "Recorder"),
+    third: roleInfo(iThird, "3rd Teammate"),
+    login: roleInfo(iLogin, "Login"),
+  };
   for (const row of rows.slice(hi + 1)) {
     const name = c(row, iTeam).replace(/\s+/g, "");
     if (!name) continue;
     const extra = {};
     head.forEach((h, i) => {
-      if (h && ![iTeam, iCounter, iRecorder, iMap].includes(i) && c(row, i)) extra[h] = c(row, i);
+      if (h && !used.includes(i) && c(row, i)) extra[h] = c(row, i);
     });
+    const login = iLogin >= 0 ? c(row, iLogin) : "";
     out[name.toLowerCase()] = {
       teamId: name,
       counter: iCounter >= 0 ? c(row, iCounter) : "",
       recorder: iRecorder >= 0 ? c(row, iRecorder) : "",
+      third: iThird >= 0 ? c(row, iThird) : "",
+      // the sheet says "user pass the same", so one value fills both
+      login: login ? { username: login, password: login } : null,
       mapSection: iMap >= 0 ? c(row, iMap) : "",
+      roles,
       extra,
     };
   }
   return out;
+}
+
+/** Turns a first name from Team Specific ("Archie") into the full name used
+ *  in Count Teams ("Archie Cole") when exactly one member matches. */
+export function fullName(short, members) {
+  const s = String(short || "").trim();
+  if (!s) return "";
+  const norm = (x) => x.replace(/\*+/g, "").trim();
+  const hits = [...new Set((members || []).map(norm))].filter((m) => m.toLowerCase() === s.toLowerCase() || m.toLowerCase().startsWith(s.toLowerCase() + " "));
+  return hits.length === 1 ? hits[0] : s;
 }
 
 /** Every real team (Team1..TeamN) across phases + Team Specific, in number order. */

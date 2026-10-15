@@ -68,10 +68,30 @@ button { font: inherit; color: inherit; }
 
 /* ---------- team main ---------- */
 .team-head h2 { margin: 2px 0 6px; font-size: 2em; color: var(--accent); }
-.members { font-size: 1.15em; line-height: 1.4; margin: 0 0 10px; }
-.roles { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.role { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; font-size: 0.9em; }
-.role b { color: var(--text-dim); font-weight: 600; margin-right: 4px; }
+.members { font-size: 1.15em; line-height: 1.4; margin: 0 0 14px; }
+
+/* ---------- roles & login ---------- */
+.roles-card h3 { margin-bottom: 12px; }
+.role-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.role-col {
+  background: var(--panel-alt); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px; border-top: 3px solid var(--text-dim);
+}
+.role-counter { border-top-color: var(--accent); }
+.role-recorder { border-top-color: var(--blue); }
+.role-third { grid-column: 1 / -1; }
+.role-label { font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
+.role-counter .role-label { color: var(--accent); }
+.role-recorder .role-label { color: var(--blue); }
+.role-name { font-size: 1.2em; font-weight: 700; margin: 4px 0 6px; }
+.role-desc { font-size: 0.85em; line-height: 1.4; color: var(--text-dim); }
+.login { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.login-head { font-size: 0.9em; font-weight: 600; margin-bottom: 8px; }
+.login-head span { font-weight: 400; color: var(--text-dim); }
+.login-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.login-grid > div { background: var(--panel-alt); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.login-grid b { display: block; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); margin-bottom: 4px; }
+.login-grid code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.35em; font-weight: 700; letter-spacing: 1px; user-select: all; -webkit-user-select: all; }
 
 .seg {
   display: flex; gap: 4px; padding: 4px;

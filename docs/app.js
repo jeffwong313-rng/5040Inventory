@@ -3,7 +3,7 @@
 // directly (it is shared "anyone with the link can view"), so it needs no
 // server of its own and runs fine on GitHub Pages.
 import {
-  parseCountTeams, parseTeamSpecific, teamList, findTeam,
+  parseCountTeams, parseTeamSpecific, teamList, findTeam, fullName,
   parseAssignment, resolveSpecs, resolveMfrs, assignmentText,
 } from "./zones.js";
 import { MapView } from "./map.js";
@@ -155,10 +155,7 @@ function renderTeam(teamId) {
   if (spec.mapSection) fields.push(["Map section", esc(spec.mapSection)]);
   for (const [k, v] of Object.entries(spec.extra || {})) fields.push([esc(k), esc(v)]);
 
-  const roles = [
-    spec.counter && `<span class="role"><b>Counter</b>${esc(spec.counter)}</span>`,
-    spec.recorder && `<span class="role"><b>Recorder</b>${esc(spec.recorder)}</span>`,
-  ].filter(Boolean).join("");
+  const rolesCard = renderRolesCard(spec, state.phases.flatMap((p) => findTeam(p, teamId)?.members || []));
 
   const zl = phase?.zonesLeft || [];
   const mainLine = assignment
@@ -176,8 +173,8 @@ function renderTeam(teamId) {
       <section class="team-head">
         <h2>${esc(teamId)}</h2>
         <p class="members">${members.length ? esc(members.join(" · ")) : "Members not listed yet"}</p>
-        ${roles ? `<div class="roles">${roles}</div>` : ""}
       </section>
+      ${rolesCard}
       ${phaseSeg()}
       <section class="card">
         <h3>${esc(phase ? phaseLabel(phase) : "Assignment")} · ${kind}</h3>
@@ -192,6 +189,37 @@ function renderTeam(teamId) {
   document.getElementById("switch").onclick = () => { store.set("team", null); go("#/"); };
   document.getElementById("open-map").onclick = () => go(`#/${encodeURIComponent(teamId)}/map`);
   bindPhaseSeg(() => renderTeam(teamId));
+}
+
+/** "Who does what" + team login, from the Team Specific tab. */
+function renderRolesCard(spec, allMembers) {
+  const R = spec.roles || {};
+  const person = (key, fallback) => {
+    const who = spec[key];
+    if (!who) return "";
+    const role = R[key] || { label: fallback, desc: "" };
+    return `<div class="role-col role-${key}">
+      <div class="role-label">${esc(role.label || fallback)}</div>
+      <div class="role-name">${esc(fullName(who, allMembers))}</div>
+      ${role.desc ? `<div class="role-desc">${esc(role.desc)}</div>` : ""}
+    </div>`;
+  };
+  const cols = [person("counter", "Counter"), person("recorder", "Recorder"), person("third", "3rd Teammate")].filter(Boolean);
+  const login = spec.login
+    ? `<div class="login">
+        <div class="login-head">Team login${spec.recorder ? ` <span>· the Recorder (${esc(fullName(spec.recorder, allMembers))}) signs in for the team</span>` : ""}</div>
+        <div class="login-grid">
+          <div><b>Username</b><code>${esc(spec.login.username)}</code></div>
+          <div><b>Password</b><code>${esc(spec.login.password)}</code></div>
+        </div>
+      </div>`
+    : "";
+  if (!cols.length && !login) return "";
+  return `<section class="card roles-card">
+      <h3>Roles &amp; login</h3>
+      ${cols.length ? `<div class="role-cols">${cols.join("")}</div>` : ""}
+      ${login}
+    </section>`;
 }
 
 function resolveFor(teamId) {
