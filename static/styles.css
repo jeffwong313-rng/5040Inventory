@@ -199,6 +199,33 @@ html, body {
 }
 .team-filter:focus { outline: 2px solid var(--accent-dim); }
 
+/* QR code that opens the phone companion site */
+.companion-qr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 8px 14px 8px 8px;
+  background: var(--panel-alt);
+  border: 1px solid var(--accent-dim);
+  border-radius: 12px;
+  color: var(--text);
+  text-decoration: none;
+}
+.companion-qr img {
+  width: 104px;
+  height: 104px;
+  border-radius: 6px;
+  background: #fff;
+  display: block;
+}
+.companion-qr span { display: flex; flex-direction: column; gap: 4px; max-width: 120px; font-size: 0.95em; line-height: 1.25; color: var(--text-dim); }
+.companion-qr b { color: var(--accent); font-size: 1.2em; }
+@media (max-width: 700px) {
+  /* on a phone you're already on a phone: keep it small */
+  .companion-qr img { width: 64px; height: 64px; }
+}
+
 .phase-tabs {
   display: flex;
   gap: 6px;
