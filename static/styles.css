@@ -11,7 +11,7 @@
   --danger: #ff6b6b;
   --blue: #5aa9ff;
   --radius: 14px;
-  --gap: 10px;
+  --gap: 5px; /* space between sections (halved from 10px) */
   --font-scale: 1;
 }
 
@@ -39,14 +39,14 @@ html, body {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  padding: 8px 20px;
+  padding: 3px 16px;
   border-bottom: 1px solid var(--border);
-  gap: 16px;
+  gap: 12px;
 }
 
-.brand { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
-.brand .logo { font-size: 2.6em; line-height: 1; }
-.brand h1 { margin: 0; font-size: 2em; letter-spacing: 0.2px; }
+.brand { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.brand .logo { font-size: 1.2em; line-height: 1; }
+.brand h1 { margin: 0; font-size: 1.1em; line-height: 1.2; letter-spacing: 0.2px; }
 
 .header-datetime {
   justify-self: center;
@@ -58,7 +58,7 @@ html, body {
 .header-date, .header-clock {
   margin: 0;
   color: var(--text);
-  font-size: 2em;
+  font-size: 1.1em;
   font-weight: 700;
   letter-spacing: 0.2px;
   white-space: nowrap;
@@ -120,7 +120,8 @@ html, body {
   grid-template-columns: 1fr;
   grid-template-rows: auto 1fr;
   gap: var(--gap);
-  padding: var(--gap);
+  /* tight under the header; sides and bottom keep a little breathing room */
+  padding: var(--gap) calc(var(--gap) * 2) calc(var(--gap) * 2);
   min-height: 0;
 }
 
@@ -212,8 +213,9 @@ html, body {
   border-radius: 8px;
   padding: 9px 14px;
   font-size: 1.05em;
-  min-width: 200px;
-  flex: 1 1 220px;
+  /* short enough to sit beside the QR code on the right */
+  min-width: 140px;
+  flex: 0 1 280px;
 }
 .team-filter:focus { outline: 2px solid var(--accent-dim); }
 
@@ -223,6 +225,7 @@ html, body {
   align-items: center;
   gap: 10px;
   flex: 0 0 auto;
+  margin-left: auto; /* pins it to the right edge of the Count Teams header */
   padding: 5px 12px 5px 5px;
   background: var(--panel-alt);
   border: 1px solid var(--accent-dim);
@@ -239,6 +242,10 @@ html, body {
 }
 .companion-qr span { display: flex; flex-direction: column; gap: 4px; max-width: 90px; font-size: 0.85em; line-height: 1.25; color: var(--text-dim); }
 .companion-qr b { color: var(--accent); font-size: 1.25em; }
+@media (min-width: 701px) {
+  /* title, search bar and QR share one row */
+  .panel-teams .panel-head { flex-wrap: nowrap; }
+}
 @media (max-width: 700px) {
   /* on a phone you're already on a phone: keep it small */
   .companion-qr img { width: 56px; height: 56px; }
@@ -399,9 +406,9 @@ html, body {
 }
 
 @media (max-width: 1300px) and (min-width: 701px) {
-  .header-date, .header-clock { font-size: 1.5em; }
+  .header-date, .header-clock { font-size: 1.1em; }
   .header-datetime { gap: 12px; }
-  .topbar { padding: 18px 16px; gap: 10px; }
+  .topbar { padding: 3px 16px; gap: 10px; }
   .sync-status { font-size: 0.75em; padding: 5px 10px; }
 }
 
@@ -410,17 +417,17 @@ html, body {
     grid-template-columns: 1fr;
     justify-items: center;
     text-align: center;
-    padding: 14px 16px;
-    gap: 8px;
+    padding: 6px 16px;
+    gap: 4px;
   }
-  .brand .logo { font-size: 2em; }
-  .brand h1 { font-size: 1.4em; }
+  .brand .logo { font-size: 1.2em; }
+  .brand h1 { font-size: 1.1em; }
   .header-datetime { justify-self: center; gap: 12px; }
-  .header-date, .header-clock { font-size: 1.1em; }
+  .header-date, .header-clock { font-size: 1.05em; }
 }
 
 @media (max-width: 480px) {
-  .brand h1 { font-size: 1.1em; }
+  .brand h1 { font-size: 1em; }
   .team-grid { grid-template-columns: 1fr; }
   .bins-summary { justify-content: center; text-align: center; }
 }
