@@ -290,8 +290,15 @@ html, body {
 .team-card .team-field { font-size: 1em; color: var(--text-dim); margin-top: 4px; }
 .team-card .team-field b { color: var(--text); font-weight: 600; }
 .team-card.dimmed { opacity: 0.3; }
-.team-card.helper { border-style: dashed; }
-.team-card.helper .team-id { color: var(--blue); }
+.team-card.helper {
+  /* PRECOUNTS helpers: one full-width line under the numbered teams */
+  grid-column: 1 / -1;
+  border-style: dashed;
+  display: flex; align-items: baseline; gap: 14px;
+  white-space: nowrap; overflow: hidden;
+}
+.team-card.helper .team-id { color: var(--blue); flex: 0 0 auto; }
+.team-card.helper .team-members { margin: 0; overflow: hidden; text-overflow: ellipsis; }
 .team-card .team-field.unassigned { font-style: italic; }
 
 .zones-left {

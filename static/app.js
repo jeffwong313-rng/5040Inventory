@@ -7,6 +7,7 @@
     activePhaseTitle: null,
     filterText: "",
     countTeams: [],
+    timeline: null,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -25,6 +26,7 @@
   }
 
   function render(data) {
+    state.timeline = data.timeline || null;
     renderSyncStatus(data.source, data.timeline);
     renderTimeline(data.timeline);
     renderTeams(data.countTeams);
@@ -127,6 +129,25 @@
     if (Math.abs(track.scrollLeft - target) > 2) {
       track.scrollTo({ left: target, behavior: "smooth" });
     }
+  }
+
+  // When official counts start on the event day: the Timeline entry that
+  // mentions "official count" (12:30 PM in the sheet), else 12:30 PM.
+  const DEFAULT_OFFICIAL_START = 12 * 60 + 30;
+  function officialCountStart(timeline) {
+    const eventDate = parseEventDate(timeline && timeline.date);
+    if (!eventDate) return null;
+    const entry = ((timeline && timeline.entries) || []).find((e) =>
+      /official\s*count/i.test(`${e.event || ""} ${e.notes || ""}`) && parseClockTime(e.time) != null);
+    const mins = entry ? parseClockTime(entry.time) : DEFAULT_OFFICIAL_START;
+    const start = new Date(eventDate);
+    start.setHours(Math.floor(mins / 60), mins % 60, 0, 0);
+    return start;
+  }
+
+  function precountsOver() {
+    const start = officialCountStart(state.timeline);
+    return start != null && Date.now() >= start.getTime();
   }
 
   function closestPastEntryIndex(entries) {
@@ -236,7 +257,11 @@
       zonesLeftEl.innerHTML = "";
     }
 
-    const cards = phase.teams.map((t) => {
+    // The PRECOUNTS helpers (e.g. "David from Ironridge") only matter until
+    // official counts start, so drop them from every round after that.
+    const teams = precountsOver() ? phase.teams.filter((t) => !t.helper) : phase.teams;
+
+    const cards = teams.map((t) => {
       const haystack = [
         t.teamId,
         ...(t.members || []),
@@ -261,8 +286,17 @@
         t.mfr && t.mfr.length ? ["MFR", t.mfr.join(", ")] : null,
       ].filter(Boolean);
 
+      if (t.helper) {
+        // full-width, single line: "PRECOUNTS  David from Ironridge · Yohan from Pegasus · Grace"
+        return `
+        <div class="team-card helper${matches ? "" : " dimmed"}">
+          <div class="team-id">${escapeHtml(t.teamId)}</div>
+          <div class="team-members">${escapeHtml((t.members || []).join(" · "))}</div>
+        </div>`;
+      }
+
       return `
-        <div class="team-card${t.helper ? " helper" : ""}${matches ? "" : " dimmed"}">
+        <div class="team-card${matches ? "" : " dimmed"}">
           <div class="team-id">${escapeHtml(t.teamId)}</div>
           <div class="team-members">${escapeHtml((t.members || []).join(" & ") || "Unassigned")}</div>
           ${fields.map(([label, val]) => `<div class="team-field"><b>${escapeHtml(label)}:</b> ${escapeHtml(val)}</div>`).join("")}
