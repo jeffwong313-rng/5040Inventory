@@ -72,7 +72,7 @@ button { font: inherit; color: inherit; }
 
 /* ---------- roles & login ---------- */
 .roles-card h3 { margin-bottom: 12px; }
-.role-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.role-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .role-col {
   background: var(--panel-alt); border: 1px solid var(--border); border-radius: 12px;
   padding: 12px; border-top: 3px solid var(--text-dim);
