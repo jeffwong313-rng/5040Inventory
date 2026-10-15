@@ -117,6 +117,16 @@
           </div>`;
       })
       .join("");
+
+    // keep the current event in view (centred) without a visible scrollbar;
+    // before/after the event day, start from the first entry
+    const nowEl = track.querySelector(".timeline-item.now");
+    const target = nowEl
+      ? Math.max(0, nowEl.offsetLeft - (track.clientWidth - nowEl.offsetWidth) / 2)
+      : 0;
+    if (Math.abs(track.scrollLeft - target) > 2) {
+      track.scrollTo({ left: target, behavior: "smooth" });
+    }
   }
 
   function closestPastEntryIndex(entries) {
