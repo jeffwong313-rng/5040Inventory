@@ -85,6 +85,40 @@ name so order doesn't matter):
 marked there are excluded from the count, and a group with every row
 marked deleted disappears from the dashboard entirely.
 
+## Phone companion (team page + map)
+
+The dashboard shows a QR code next to the Count Teams search. It opens
+**https://jeffwong313-rng.github.io/5040Inventory/**, a phone page served by
+GitHub Pages from the `docs/` folder. It doesn't use Render at all, so it
+works even while the free Render instance is asleep.
+
+- **Pick your team.** No login. The phone remembers the choice ("← Teams" switches).
+- **Team screen:** members, Counter/Recorder (from the *Team Specific* tab),
+  and the assignment for PreCounts / First Count / Variance 1, read live
+  from *Count Teams* every 30 seconds.
+- **Map:** a picture of the Main Warehouse / Warehouse 2 / Warehouse 3 /
+  Yard tabs. Everything is muted except the team's zones, and it zooms to
+  them. Drag to move, pinch or +/− to zoom. Variance rounds (which list
+  MFRs, not zones) light up map labels mentioning those manufacturers.
+
+How zones are found on the map: a code like `WH1-PURPLE-E` is matched to
+the purple block next to the letter **E** on the map (or to a small label
+like `WH1-BLUE-H` placed beside a block). `WH2` / `YARD` with nothing after
+lights up that whole map. If a zone can't be pinned down, the app lights
+the whole colour area and marks it with ≈ in the legend.
+
+The map picture itself is `docs/data/map.json`, built by the **Refresh
+companion map** GitHub Action (`tools/extract_map.mjs`). It runs daily.
+After editing a map tab, run it right away from the repo's *Actions* tab
+→ *Refresh companion map* → *Run workflow*. Its commits say
+`[skip render]`, so they don't redeploy the dashboard.
+
+Team Specific tab columns used: `Team Name`, `Counter`, `Recorder`,
+`Map Section`. Map Section is used for the map when a round has no zone
+for that team. Any extra columns you add are shown on the team screen.
+
+Tests: `node --test docs/tests/zones.test.mjs`
+
 ## Configuration
 
 Environment variables (all optional, defaults point at the real sheet):
