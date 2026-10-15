@@ -121,7 +121,7 @@ function mergeSegments(segs) {
 function crop(data, c) {
   const inside = (x, y, w, h) =>
     (c.maxX == null || x < c.maxX) && (c.maxY == null || y < c.maxY) &&
-    (c.minX == null || x + w > c.minX) && (c.minY == null || y + h > c.minY);
+    (c.minX == null || x >= c.minX) && (c.minY == null || y >= c.minY);
   const cells = data.cells.filter(([x, y, w, h]) => inside(x, y, w, h));
   const segs = data.segs.filter(([x1, y1, x2, y2]) =>
     inside(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1)));
