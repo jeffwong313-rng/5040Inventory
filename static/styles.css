@@ -45,8 +45,8 @@ html, body {
 }
 
 .brand { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-.brand .logo { font-size: 1.6em; line-height: 1; }
-.brand h1 { margin: 0; font-size: 1.45em; line-height: 1.2; letter-spacing: 0.2px; }
+.brand .logo { font-size: clamp(1.5em, 2.3vw, 2.2em); line-height: 1; }
+.brand h1 { margin: 0; font-size: clamp(1.2em, 1.68vw, 2.15em); line-height: 1.2; letter-spacing: 0.2px; }
 
 .header-datetime {
   justify-self: center;
@@ -58,7 +58,7 @@ html, body {
 .header-date, .header-clock {
   margin: 0;
   color: var(--text);
-  font-size: 1.45em;
+  font-size: clamp(1.2em, 1.68vw, 2.15em);
   font-weight: 700;
   letter-spacing: 0.2px;
   white-space: nowrap;
@@ -402,10 +402,15 @@ html, body {
   :root { --font-scale: 1.02; }
 }
 
+@media (max-width: 900px) and (min-width: 701px) {
+  .brand { white-space: normal; }
+  .header-date, .header-clock { font-size: 1em; }
+}
+
 @media (max-width: 1300px) and (min-width: 701px) {
   .header-date, .header-clock { font-size: 1.2em; }
-  .brand h1 { font-size: 1.2em; }
-  .brand .logo { font-size: 1.4em; }
+  .brand h1 { font-size: 1.05em; }
+  .brand .logo { font-size: 1.3em; }
   .header-datetime { gap: 12px; }
   .topbar { padding: 3px 16px; gap: 10px; }
   .sync-status { font-size: 0.75em; padding: 5px 10px; }
@@ -419,6 +424,7 @@ html, body {
     padding: 6px 16px;
     gap: 4px;
   }
+  .brand { white-space: normal; }
   .brand .logo { font-size: 1.2em; }
   .brand h1 { font-size: 1.1em; }
   .header-datetime { justify-self: center; gap: 12px; }
