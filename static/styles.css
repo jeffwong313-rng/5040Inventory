@@ -242,10 +242,6 @@ html, body {
 }
 .companion-qr span { display: flex; flex-direction: column; gap: 4px; max-width: 90px; font-size: 0.85em; line-height: 1.25; color: var(--text-dim); }
 .companion-qr b { color: var(--accent); font-size: 1.25em; }
-@media (min-width: 701px) {
-  /* title, search bar and QR share one row */
-  .panel-teams .panel-head { flex-wrap: nowrap; }
-}
 @media (max-width: 700px) {
   /* on a phone you're already on a phone: keep it small */
   .companion-qr img { width: 56px; height: 56px; }
@@ -253,10 +249,11 @@ html, body {
 }
 
 .phase-tabs {
+  /* sits in the Count Teams header, between the search bar and the QR code */
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  flex: 0 1 auto;
 }
 .phase-tab {
   background: var(--panel-alt);
