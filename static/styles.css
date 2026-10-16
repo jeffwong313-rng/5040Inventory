@@ -202,6 +202,14 @@ html, body {
   /* long notes stay to three lines so the row doesn't grow */
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
+/* breaks (lunch, dinner, ...) in red */
+.timeline-item.break {
+  background: rgba(255, 107, 107, 0.16);
+  border-color: var(--danger);
+}
+.timeline-item.break .t-time,
+.timeline-item.break .t-event { color: var(--danger); font-weight: 700; }
+.timeline-item.break.now { box-shadow: 0 0 0 2px var(--danger) inset; }
 .timeline-item .t-event:empty::after { content: "—"; color: var(--text-dim); }
 
 /* ---------- teams ---------- */
