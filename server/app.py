@@ -13,6 +13,7 @@ from . import config
 from .cache import cache
 from .manager import page_router as manager_page_router
 from .manager import router as manager_router
+from .round_control import router as round_router
 from .routes.api import router as api_router
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
@@ -64,6 +65,7 @@ def create_app(start_background: bool = True) -> FastAPI:
     )
     app.include_router(api_router)
     app.include_router(manager_router)
+    app.include_router(round_router)
     app.include_router(manager_page_router)
 
     if STATIC_DIR.exists():
