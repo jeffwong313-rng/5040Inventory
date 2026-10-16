@@ -7,12 +7,16 @@ import {
   parseAssignment, resolveSpecs, resolveMfrs, assignmentText,
 } from "./zones.js";
 import { MapView } from "./map.js";
+import { initQuestion, openQuestion } from "./question.js";
 
 const CONFIG = {
   sheetId: "1eSonYt5Fyxyune85dnnntaunvOupIzBN6eMEhFrHnU8",
   gidCountTeams: "208058828",
   gidTeamSpecific: "293732955",
   refreshMs: 30000,
+  // The Render server relays "Question" calls to the manager page.
+  apiBase: "https://warehouse-inventory-dashboard.onrender.com",
+  managerName: "Jeff",
 };
 const csvUrl = (gid) =>
   `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/export?format=csv&gid=${gid}`;
@@ -182,12 +186,16 @@ function renderTeam(teamId) {
         ${mainLine}
         ${fields.map(([k, v]) => `<div class="field"><b>${k}</b><span>${v}</span></div>`).join("")}
       </section>
-      <button class="map-btn" id="open-map">🗺️ Open map</button>
+      <div class="action-row">
+        <button class="map-btn" id="open-map">🗺️ Open map</button>
+        <button class="q-btn" id="ask">✋ Question</button>
+      </div>
       ${zl.length ? `<section class="card"><h3>Zones left this round (${zl.length})</h3><div class="chips">${zl.map((z) => `<span class="chip">${esc(z)}</span>`).join("")}</div></section>` : ""}
       <p class="foot">Updates live from the inventory sheet.</p>
     </main>`;
   document.getElementById("switch").onclick = () => { store.set("team", null); go("#/"); };
   document.getElementById("open-map").onclick = () => go(`#/${encodeURIComponent(teamId)}/map`);
+  document.getElementById("ask").onclick = () => askFor(teamId);
   bindPhaseSeg(() => renderTeam(teamId));
 }
 
@@ -253,6 +261,7 @@ function renderMap(teamId) {
       <header class="bar">
         <button class="back" id="back">← ${esc(teamId)}</button>
         <h1>Map</h1>${syncBadge()}
+        <button class="q-mini" id="ask" aria-label="Question: call ${esc(CONFIG.managerName)}">✋ Question</button>
       </header>
       <div class="map-controls">
         ${phaseSeg()}
@@ -271,6 +280,7 @@ function renderMap(teamId) {
     </div>`;
 
   document.getElementById("back").onclick = () => go(`#/${encodeURIComponent(teamId)}`);
+  document.getElementById("ask").onclick = () => askFor(teamId);
   bindPhaseSeg(() => renderMap(teamId));
   $app.querySelectorAll("[data-wh]").forEach((b) =>
     b.addEventListener("click", () => { state.whKey = b.dataset.wh; state.mapKey = null; renderMap(teamId); state.mapKey = key; }));
@@ -301,6 +311,21 @@ function renderMap(teamId) {
     stage.insertAdjacentHTML("beforeend", `<div class="map-empty">None of your zones are in ${esc(tab.name)}. Look for the green dot on the other tabs.</div>`);
   }
   state.mapKey = key;
+}
+
+/* -------------------------------------------------------- question */
+
+function askFor(teamId) {
+  const phase = state.phases[state.phaseIdx];
+  const t = findTeam(phase, teamId);
+  const anyT = state.phases.map((p) => findTeam(p, teamId)).find(Boolean);
+  const where = t ? [t.zone, t.section].filter(Boolean).join(", ") || (t.mfr || []).join(", ") : "";
+  openQuestion({
+    team: teamId,
+    members: (t || anyT)?.members || [],
+    phase: phase ? phaseLabel(phase) : "",
+    assignment: where,
+  });
 }
 
 /* ------------------------------------------------------------ main */
@@ -345,6 +370,7 @@ async function tick() {
 }
 
 async function start() {
+  initQuestion({ apiBase: CONFIG.apiBase, managerName: CONFIG.managerName, store, esc });
   const p = parseInt(store.get("phase") || "0", 10);
   state.phaseIdx = isNaN(p) ? 0 : p;
   await loadSheet();
