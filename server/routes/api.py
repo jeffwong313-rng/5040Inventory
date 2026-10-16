@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from ..cache import cache
+from ..round_control import round_state
 
 router = APIRouter(prefix="/api")
 
@@ -14,7 +15,8 @@ async def health() -> dict:
 
 @router.get("/dashboard")
 async def dashboard() -> dict:
-    return cache.snapshot.to_dict()
+    # the manager's current round rides along so the TV follows it too
+    return {**cache.snapshot.to_dict(), "round": round_state.public()}
 
 
 @router.get("/timeline")
