@@ -125,6 +125,34 @@ extra columns you add are shown on the team screen.
 
 Tests: `node --test docs/tests/zones.test.mjs`
 
+## Manager page (Question alerts + part lookup)
+
+The manager's own screen lives at a private link:
+`https://warehouse-inventory-dashboard.onrender.com/m/<MANAGER_PASSWORD>`.
+`MANAGER_PASSWORD` is set only in Render (service → *Environment*), never in
+this repo, so the link can't be worked out from the code. Any other `/m/...`
+address returns "Not Found", and nothing links to it: no QR code, no button
+on the dashboard or the companion. Bookmark it. To revoke it, change the
+value in Render; the old link stops working after the redeploy.
+
+- **Questions.** Every team screen in the companion (and the map) has a
+  **✋ Question** button. A team can add a short note or tap a quick reason,
+  then it shows up here right away: red banner, chime every 10 s, tab title
+  and a desktop notification until you tap **On my way** (the team's phone
+  then says you're coming) and **Done**. A team tapping again bumps its
+  existing call instead of adding a new one.
+- **Lookup.** Searches the *LPF* tab by Catalog # (mainly) and MFR. Spaces
+  and punctuation don't matter (`emt 3/4` finds `EMT-3/4 (10)*`), and
+  `ANKER A52` narrows to that MFR. Each hit shows columns B–H: Mfr,
+  Catalog #, Description, LPO Cost, UOM, OH Qty, Qty Avail. Press `/` to
+  jump to the search box.
+
+Keep the page open during the count: browsers only allow sound after one
+click on the page, so if the button says **🔇 Turn on alerts**, click it.
+Having the page open also keeps the free Render instance awake, so a
+team's Question goes through instantly instead of after a ~30 s wake-up.
+Calls live in the server's memory, so a redeploy clears them.
+
 ## Configuration
 
 Environment variables (all optional, defaults point at the real sheet):
@@ -133,6 +161,9 @@ Environment variables (all optional, defaults point at the real sheet):
 |---|---|---|
 | `SHEET_ID` | the 2026 BONUS sheet | which spreadsheet to read |
 | `GID_TIMELINE` / `GID_COUNT_TEAMS` / `GID_WHATS_LEFT` | current tab gids | which tab within it (if you ever rename/recreate a tab, its gid changes — grab the new one from the tab's URL) |
+| `MANAGER_PASSWORD` | *(unset = manager page off)* | secret part of the manager link `/m/<value>` |
+| `GID_LOOKUP` | LPF tab | tab the manager lookup searches |
+| `CORS_ORIGINS` | the GitHub Pages site | sites allowed to send Questions |
 | `POLL_INTERVAL_SECONDS` | `20` | how often the server re-fetches the sheet |
 | `STALE_AFTER_SECONDS` | `120` | how long since the last good fetch before the dashboard shows a "may be stale" warning |
 | `PORT` | `8000` | server port |

@@ -14,5 +14,11 @@ services:
         value: "91380376"
       - key: GID_WHATS_LEFT
         value: "1571653131"
+      - key: GID_LOOKUP
+        value: "80916219"
+      # Secret part of the private manager link (/m/<value>). Render asks
+      # for it on first sync; change it under Environment to revoke.
+      - key: MANAGER_PASSWORD
+        sync: false
       - key: POLL_INTERVAL_SECONDS
         value: "20"
