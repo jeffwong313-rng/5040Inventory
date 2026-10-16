@@ -77,6 +77,24 @@ button, input { font: inherit; color: inherit; }
 .count { background: var(--danger); color: #fff; border-radius: 999px; padding: 1px 9px; font-size: 0.85em; }
 .count:empty { display: none; }
 
+/* ---------- count round switch ---------- */
+.round-panel { grid-column: 1 / -1; }
+.round-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.round-btn {
+  flex: 1 1 160px; border: 2px solid var(--border); background: var(--panel-alt); border-radius: 12px;
+  padding: 14px 16px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 2px;
+}
+.round-btn:hover { border-color: var(--text-dim); }
+.round-btn .rb-step { font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); }
+.round-btn .rb-name { font-size: 1.2em; font-weight: 800; }
+.round-btn.done { opacity: 0.5; }
+.round-btn.live { border-color: var(--accent); background: rgba(61, 220, 151, 0.12); }
+.round-btn.live .rb-step { color: var(--accent); }
+.round-btn:disabled { cursor: progress; }
+.round-now { margin: 10px 0 0; color: var(--text-dim); font-size: 0.9em; min-height: 1.2em; }
+.round-now b { color: var(--text); }
+.round-now.err { color: var(--danger); }
+
 /* ---------- calls ---------- */
 .calls { display: flex; flex-direction: column; gap: 10px; }
 .calls .empty { color: var(--text-dim); padding: 18px 4px; text-align: center; }
