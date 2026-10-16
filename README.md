@@ -147,6 +147,16 @@ value in Render; the old link stops working after the redeploy.
   Catalog #, Description, LPO Cost, UOM, OH Qty, Qty Avail. Press `/` to
   jump to the search box.
 
+- **Count round.** One button per round from *Count Teams* (PreCounts →
+  First Count, i.e. official counts → Variance 1 …). Everyone starts on
+  PreCounts. Tap a round and the TV dashboard and every team phone switch
+  to it within ~10–15 s (phones show "Jeff moved everyone to …"). That
+  round gets a ● on everyone's round tabs. If someone taps a different
+  round after that, they get a warning ("Everyone is on First Count. Look
+  at PreCounts anyway?"). They can still look, but reopening the app puts
+  them back on your round. The server keeps the round in memory, and the
+  manager page re-sends it if the server restarts, so keep the page open.
+
 Keep the page open during the count: browsers only allow sound after one
 click on the page, so if the button says **🔇 Turn on alerts**, click it.
 Having the page open also keeps the free Render instance awake, so a
