@@ -277,7 +277,6 @@ function renderTeam(teamId) {
 
   const rolesCard = renderRolesCard(spec, state.phases.flatMap((p) => findTeam(p, teamId)?.members || []));
 
-  const zl = phase?.zonesLeft || [];
   const mainLine = assignment
     ? `<p class="assign">${esc(assignment)}</p>`
     : t?.mfr?.length
@@ -306,7 +305,6 @@ function renderTeam(teamId) {
         <button class="map-btn" id="open-map">🗺️ Open map</button>
         <button class="q-btn" id="ask">✋ Question</button>
       </div>
-      ${zl.length ? `<section class="card"><h3>Zones left this round (${zl.length})</h3><div class="chips">${zl.map((z) => `<span class="chip">${esc(z)}</span>`).join("")}</div></section>` : ""}
       <p class="foot">Updates live from the inventory sheet.</p>
     </main>`;
   document.getElementById("switch").onclick = () => { store.set("team", null); go("#/"); };
