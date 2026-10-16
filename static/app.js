@@ -8,6 +8,8 @@
     filterText: "",
     countTeams: [],
     timeline: null,
+    round: null,          // manager's "everyone is on this round" { phase, label, setAt }
+    roundSeenAt: null,    // setAt of the last round switch this screen followed
   };
 
   const $ = (id) => document.getElementById(id);
@@ -27,6 +29,7 @@
 
   function render(data) {
     state.timeline = data.timeline || null;
+    state.round = data.round && data.round.phase ? data.round : null;
     renderSyncStatus(data.source, data.timeline);
     renderTimeline(data.timeline);
     renderTeams(data.countTeams);
@@ -154,6 +157,9 @@
   }
 
   function precountsOver() {
+    // the manager already moved everyone past the first round
+    const first = state.countTeams[0];
+    if (state.round && first && state.round.phase !== roundKey(first.title)) return true;
     const start = officialCountStart(state.timeline);
     return start != null && Date.now() >= start.getTime();
   }
@@ -224,23 +230,77 @@
       state.activePhaseTitle = state.countTeams[0].title;
     }
 
+    // The manager moved everyone to a round: follow it (once per switch).
+    const live = livePhase();
+    if (state.round && state.round.setAt !== state.roundSeenAt) {
+      if (live) {
+        state.activePhaseTitle = live.title;
+        state.roundSeenAt = state.round.setAt;
+      }
+    }
+
     tabsEl.innerHTML = state.countTeams
       .map(
-        (p) => `<button class="phase-tab${p.title === state.activePhaseTitle ? " active" : ""}" data-title="${escapeAttr(p.title)}">${escapeHtml(p.title.replace(/^For /i, ""))}</button>`
+        (p) => `<button class="phase-tab${p.title === state.activePhaseTitle ? " active" : ""}${live && p.title === live.title ? " live" : ""}" data-title="${escapeAttr(p.title)}">${escapeHtml(p.title.replace(/^For /i, ""))}</button>`
       )
       .join("");
 
     tabsEl.querySelectorAll(".phase-tab").forEach((btn) => {
       btn.addEventListener("click", () => {
-        state.activePhaseTitle = btn.dataset.title;
-        tabsEl.querySelectorAll(".phase-tab").forEach((b) => {
-          b.classList.toggle("active", b.dataset.title === state.activePhaseTitle);
-        });
-        renderTeamCards();
+        const choose = () => {
+          state.activePhaseTitle = btn.dataset.title;
+          tabsEl.querySelectorAll(".phase-tab").forEach((b) => {
+            b.classList.toggle("active", b.dataset.title === state.activePhaseTitle);
+          });
+          renderTeamCards();
+        };
+        const liveNow = livePhase();
+        if (liveNow && btn.dataset.title !== liveNow.title && btn.dataset.title !== state.activePhaseTitle) {
+          confirmOffRound(liveNow.title.replace(/^For /i, ""), btn.dataset.title.replace(/^For /i, ""), choose);
+        } else {
+          choose();
+        }
       });
     });
 
     renderTeamCards();
+  }
+
+  // ---------------- manager's round switch ----------------
+
+  function roundKey(name) {
+    let k = String(name || "").replace(/^\s*for\s+/i, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (k === "precount") k = "precounts";
+    return k;
+  }
+
+  function livePhase() {
+    if (!state.round) return null;
+    return state.countTeams.find((p) => roundKey(p.title) === state.round.phase) || null;
+  }
+
+  // Warn before looking at a different round than the one the manager set.
+  function confirmOffRound(liveLabel, wantedLabel, onYes) {
+    const old = document.getElementById("round-warn");
+    if (old) old.remove();
+    const wrap = document.createElement("div");
+    wrap.id = "round-warn";
+    wrap.className = "round-warn";
+    wrap.innerHTML = `
+      <div class="round-warn-box" role="alertdialog" aria-modal="true" aria-labelledby="round-warn-h">
+        <h3 id="round-warn-h">⚠️ Everyone is on ${escapeHtml(liveLabel)}</h3>
+        <p>The manager moved everyone to <b>${escapeHtml(liveLabel)}</b>. Switch to ${escapeHtml(wantedLabel)} anyway?</p>
+        <div class="round-warn-actions">
+          <button class="rw-stay" type="button">Stay on ${escapeHtml(liveLabel)}</button>
+          <button class="rw-go" type="button">Switch anyway</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    const close = () => wrap.remove();
+    wrap.querySelector(".rw-stay").onclick = close;
+    wrap.querySelector(".rw-go").onclick = () => { close(); onYes(); };
+    wrap.addEventListener("click", (e) => { if (e.target === wrap) close(); });
+    wrap.querySelector(".rw-stay").focus();
   }
 
   function renderTeamCards() {
