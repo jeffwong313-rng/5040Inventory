@@ -215,3 +215,18 @@ button { font: inherit; color: inherit; }
 /* leave room so the strip never covers the last card */
 body:has(.q-strip) .page { padding-bottom: 90px; }
 body:has(.q-strip) .map-legend { padding-bottom: 80px; }
+
+/* ---------- manager's round switch ---------- */
+.seg button.live::before { content: "● "; color: var(--accent); }
+.seg button.live[aria-pressed="true"]::before { color: var(--accent-ink); }
+.round-warn { border-top: 4px solid var(--warn); }
+.round-warn .q-sub b { color: var(--text); }
+.round-warn .rw-stay { background: var(--accent); color: var(--accent-ink); }
+.round-toast {
+  position: fixed; left: 12px; right: 12px; top: calc(10px + var(--safe-top)); z-index: 60;
+  padding: 14px 16px; border-radius: 12px; background: var(--blue); color: #04203f; font-weight: 800;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45); text-align: center;
+  transform: translateY(-140%); transition: transform 0.25s ease;
+}
+.round-toast.show { transform: none; }
+@media (prefers-reduced-motion: reduce) { .round-toast { transition: none; } }
