@@ -4,11 +4,15 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
+from . import config
 from .cache import cache
+from .manager import page_router as manager_page_router
+from .manager import router as manager_router
 from .routes.api import router as api_router
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
@@ -52,7 +56,15 @@ def create_app(start_background: bool = True) -> FastAPI:
 
     app = FastAPI(title="Warehouse Inventory Dashboard", lifespan=lifespan)
     app.add_middleware(NoCacheStaticMiddleware)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=config.CORS_ORIGINS,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
+    )
     app.include_router(api_router)
+    app.include_router(manager_router)
+    app.include_router(manager_page_router)
 
     if STATIC_DIR.exists():
         # mounted last so /api/* routes above are matched first

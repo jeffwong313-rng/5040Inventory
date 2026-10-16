@@ -35,6 +35,24 @@ GID_ALL_BINS = os.environ.get("GID_ALL_BINS", "91380376")
 # "What's Left" tab: one row per zone with Current Status (blank /
 # Assigned / Complete) and the team per round. Drives % complete.
 GID_WHATS_LEFT = os.environ.get("GID_WHATS_LEFT", "1571653131")
+# "LPF" tab: the part list the manager page searches by MFR / Catalog #.
+GID_LOOKUP = os.environ.get("GID_LOOKUP", "80916219")
+
+# Password for the manager page (/manager.html) and /api/manager/*.
+# Set it in Render's Environment settings; never commit it. Unset = the
+# manager features are switched off.
+MANAGER_PASSWORD = os.environ.get("MANAGER_PASSWORD", "").strip()
+
+# Sites allowed to call /api/question from a browser (the phone companion
+# on GitHub Pages). Comma-separated.
+CORS_ORIGINS = [
+    o.strip()
+    for o in os.environ.get(
+        "CORS_ORIGINS",
+        "https://jeffwong313-rng.github.io,http://localhost:8000,http://127.0.0.1:8000",
+    ).split(",")
+    if o.strip()
+]
 
 # How often the server re-pulls the sheet, in seconds. The dashboard polls
 # the server about this often too (see static/app.js), so this is the true
