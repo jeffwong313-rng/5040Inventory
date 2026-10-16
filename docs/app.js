@@ -14,6 +14,7 @@ const CONFIG = {
   gidCountTeams: "208058828",
   gidTeamSpecific: "293732955",
   refreshMs: 30000,
+  roundMs: 10000, // how often to check which round the manager has everyone on
   // The Render server relays "Question" calls to the manager page.
   apiBase: "https://warehouse-inventory-dashboard.onrender.com",
   managerName: "Jeff",
@@ -32,6 +33,7 @@ const state = {
   mapView: null,
   mapKey: null,
   whKey: null,
+  round: null, // manager's "everyone is on this round": { phase, label, setAt }
 };
 
 const $app = document.getElementById("app");
@@ -75,6 +77,106 @@ async function loadMap() {
     state.map = { tabs: [] };
   }
   return state.map;
+}
+
+/* ---------------------------------------------------- manager's round */
+
+// The manager page has a switch that moves everyone to a round at once
+// (PreCounts -> First Count -> Variance ...). The server holds it; this
+// phone follows it, and warns before showing a different round.
+const ROUND_MAX_AGE_S = 18 * 3600;
+
+function roundKey(name) {
+  let k = String(name || "").replace(/^\s*for\s+/i, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (k === "precount") k = "precounts";
+  return k;
+}
+
+function liveIdx() {
+  if (!state.round) return -1;
+  return state.phases.findIndex((p) => roundKey(p.name) === state.round.phase);
+}
+
+function loadCachedRound() {
+  try {
+    const r = JSON.parse(store.get("round") || "null");
+    if (r && r.phase && Date.now() / 1000 - r.setAt < ROUND_MAX_AGE_S) return r;
+  } catch { /* ignore */ }
+  return null;
+}
+
+async function fetchRound() {
+  try {
+    const r = await fetch(`${CONFIG.apiBase}/api/round`, { cache: "no-store" });
+    if (!r.ok) return;
+    const data = await r.json();
+    // a server that just restarted reports nothing until the manager page
+    // re-sends it; keep the last known round meanwhile
+    if (data && data.phase) {
+      state.round = data;
+      store.set("round", JSON.stringify(data));
+    }
+  } catch { /* offline or server waking up: keep the last known round */ }
+}
+
+/** Jump to the manager's round. `force` = always (page load); otherwise only on a new switch. */
+function followRound(force) {
+  const i = liveIdx();
+  if (i < 0) return false;
+  const seen = store.get("roundSeen");
+  const fresh = String(state.round.setAt) !== seen;
+  if (!force && !fresh) return false;
+  store.set("roundSeen", String(state.round.setAt));
+  const moved = state.phaseIdx !== i;
+  state.phaseIdx = i;
+  store.set("phase", String(i));
+  if (!force) roundToast(`${CONFIG.managerName} moved everyone to ${phaseLabel(state.phases[i])}`);
+  return moved;
+}
+
+async function roundTick() {
+  if (document.hidden) return;
+  await fetchRound();
+  if (followRound(false)) render();
+  else refreshSeg();
+}
+
+function roundToast(text) {
+  let el = document.getElementById("round-toast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "round-toast";
+    el.className = "round-toast";
+    el.setAttribute("role", "status");
+    document.body.appendChild(el);
+  }
+  el.textContent = `📣 ${text}`;
+  el.classList.add("show");
+  if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  clearTimeout(roundToast.t);
+  roundToast.t = setTimeout(() => el.classList.remove("show"), 6000);
+}
+
+function confirmOffRound(wantedIdx, onYes) {
+  const live = phaseLabel(state.phases[liveIdx()]);
+  const wanted = phaseLabel(state.phases[wantedIdx]);
+  let root = document.getElementById("round-root");
+  if (!root) { root = document.createElement("div"); root.id = "round-root"; document.body.appendChild(root); }
+  root.innerHTML = `
+    <div class="q-overlay" id="rw-overlay">
+      <div class="q-sheet round-warn" role="alertdialog" aria-modal="true" aria-labelledby="rw-title">
+        <h2 id="rw-title">⚠️ Everyone is on ${esc(live)}</h2>
+        <p class="q-sub">${esc(CONFIG.managerName)} moved everyone to <b>${esc(live)}</b>. Are you sure you want to look at ${esc(wanted)} instead?</p>
+        <div class="q-actions">
+          <button type="button" class="q-cancel" id="rw-go">Switch anyway</button>
+          <button type="button" class="q-send rw-stay" id="rw-stay">Stay on ${esc(live)}</button>
+        </div>
+      </div>
+    </div>`;
+  const close = () => { root.innerHTML = ""; };
+  document.getElementById("rw-stay").onclick = close;
+  document.getElementById("rw-go").onclick = () => { close(); onYes(); };
+  document.getElementById("rw-overlay").addEventListener("click", (e) => { if (e.target.id === "rw-overlay") close(); });
 }
 
 /* ---------------------------------------------------------- routing */
@@ -128,17 +230,31 @@ function errorOrEmpty() {
 
 function phaseSeg() {
   if (!state.phases.length) return "";
+  const live = liveIdx();
   return `<div class="seg" role="group" aria-label="Count round">${state.phases.map((p, i) =>
-    `<button data-phase="${i}" aria-pressed="${i === state.phaseIdx}">${esc(phaseLabel(p))}</button>`).join("")}</div>`;
+    `<button data-phase="${i}" aria-pressed="${i === state.phaseIdx}" class="${i === live ? "live" : ""}">${esc(phaseLabel(p))}</button>`).join("")}</div>`;
 }
 
 function bindPhaseSeg(after) {
   $app.querySelectorAll("[data-phase]").forEach((b) =>
     b.addEventListener("click", () => {
-      state.phaseIdx = +b.dataset.phase;
-      store.set("phase", String(state.phaseIdx));
-      after();
+      const idx = +b.dataset.phase;
+      if (idx === state.phaseIdx) return;
+      const choose = () => {
+        state.phaseIdx = idx;
+        store.set("phase", String(state.phaseIdx));
+        after();
+      };
+      const live = liveIdx();
+      if (live >= 0 && idx !== live) confirmOffRound(idx, choose);
+      else choose();
     }));
+}
+
+/** Update just the live-round dot without rebuilding the page. */
+function refreshSeg() {
+  const live = liveIdx();
+  $app.querySelectorAll("[data-phase]").forEach((b) => b.classList.toggle("live", +b.dataset.phase === live));
 }
 
 function renderTeam(teamId) {
@@ -373,14 +489,17 @@ async function start() {
   initQuestion({ apiBase: CONFIG.apiBase, managerName: CONFIG.managerName, store, esc });
   const p = parseInt(store.get("phase") || "0", 10);
   state.phaseIdx = isNaN(p) ? 0 : p;
-  await loadSheet();
+  state.round = loadCachedRound();
+  await Promise.all([loadSheet(), fetchRound()]);
   if (state.phaseIdx >= state.phases.length) state.phaseIdx = 0;
+  followRound(true); // opening the app always lands on the manager's round
   window.addEventListener("hashchange", render);
   render();
   loadMap();
   setInterval(() => { if (!document.hidden) tick(); }, CONFIG.refreshMs);
   setInterval(refreshSyncBadge, 5000);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+  setInterval(roundTick, CONFIG.roundMs);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { tick(); roundTick(); } });
 }
 
 start();
