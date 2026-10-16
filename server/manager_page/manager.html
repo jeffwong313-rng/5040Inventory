@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#0b0d12" />
+<title>Manager · Inventory</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%94%3C/text%3E%3C/svg%3E" />
+<meta name="referrer" content="no-referrer" />
+<link rel="stylesheet" href="/m-assets/manager.css" />
+</head>
+<body>
+  <section id="login" class="login-screen" hidden>
+    <form id="login-form" class="login-card">
+      <h1>Manager</h1>
+      <p>Enter the manager password.</p>
+      <input id="password" type="password" autocomplete="current-password" placeholder="Password" required />
+      <button type="submit">Sign in</button>
+      <p id="login-error" class="login-error" role="alert"></p>
+    </form>
+  </section>
+
+  <div id="main" class="mgr" hidden>
+    <header class="mgr-bar">
+      <h1>🔔 Manager</h1>
+      <span id="conn" class="conn"><span class="dot"></span><span id="conn-text">Connecting…</span></span>
+      <button id="sound" class="pill" type="button">🔇 Turn on alerts</button>
+      <button id="signout" class="pill ghost" type="button">Sign out</button>
+    </header>
+
+    <div id="alert-banner" class="alert-banner" hidden></div>
+
+    <main class="mgr-grid">
+      <section class="panel calls-panel" aria-labelledby="calls-h">
+        <h2 id="calls-h">Questions <span id="open-count" class="count"></span></h2>
+        <div id="calls" class="calls"></div>
+      </section>
+
+      <section class="panel lookup-panel" aria-labelledby="lookup-h">
+        <h2 id="lookup-h">Lookup <span class="hint">MFR / Catalog # · LPF tab</span></h2>
+        <form id="lookup-form" class="search" role="search">
+          <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Catalog # or MFR, e.g. A5220 or ANKER A52" />
+          <button type="submit">Search</button>
+        </form>
+        <p id="lookup-meta" class="meta"></p>
+        <div id="results" class="results"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/m-assets/manager.js"></script>
+</body>
+</html>
