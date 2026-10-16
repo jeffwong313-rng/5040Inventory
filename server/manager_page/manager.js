@@ -184,6 +184,7 @@
   });
 
   async function poll() {
+    pollRound();
     try {
       const data = await api("/api/manager/questions");
       serverOffset = data.now - Date.now() / 1000;
@@ -197,6 +198,101 @@
       $("conn").className = "conn";
       $("conn-text").textContent = "Reconnecting…";
     }
+  }
+
+  /* ---------------------------------------------------- count round */
+  // Everyone starts on the first round (PreCounts). Tapping a round here
+  // moves the TV and every team phone to it. The last choice is kept on
+  // this device and re-sent if the server restarted and forgot it.
+  const FALLBACK_ROUNDS = ["PreCounts", "First Count", "Variance 1"];
+  const RESEND_WITHIN_S = 18 * 3600;
+  let rounds = FALLBACK_ROUNDS.slice();
+  let round = null;        // server's { phase, label, setAt }
+  let roundBusy = false;
+  let roundErr = "";
+  let lastRoundsFetch = 0;
+
+  const roundKey = (name) => {
+    let s = String(name || "").replace(/^\s*for\s+/i, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (s === "precount") s = "precounts";
+    return s;
+  };
+  const prettyRound = (t) => String(t).replace(/^\s*for\s+/i, "").trim();
+
+  async function loadRounds() {
+    if (Date.now() - lastRoundsFetch < 30000) return;
+    lastRoundsFetch = Date.now();
+    try {
+      const r = await fetch("/api/count-teams", { cache: "no-store" });
+      const phases = await r.json();
+      const names = (phases || []).map((p) => prettyRound(p.title)).filter(Boolean);
+      if (names.length) rounds = names;
+    } catch { /* keep the last list */ }
+  }
+
+  function liveIndex() {
+    if (!round || !round.phase) return 0; // nobody has switched yet: first round
+    const i = rounds.findIndex((n) => roundKey(n) === round.phase);
+    return i;
+  }
+
+  function renderRound() {
+    const live = liveIndex();
+    $("round-btns").innerHTML = rounds.map((name, i) => {
+      const official = /first|official/i.test(name) ? " <span class=\"rb-step\">official counts</span>" : "";
+      const cls = i === live ? "live" : live >= 0 && i < live ? "done" : "";
+      const step = i === live ? "● Everyone is here" : live >= 0 && i < live ? "Finished" : `Step ${i + 1}`;
+      return `<button class="round-btn ${cls}" data-round="${esc(name)}" ${roundBusy ? "disabled" : ""}>
+        <span class="rb-step">${step}</span><span class="rb-name">${esc(name)}</span>${official}</button>`;
+    }).join("");
+    const now = $("round-now");
+    now.className = "round-now" + (roundErr ? " err" : "");
+    if (roundErr) now.textContent = roundErr;
+    else if (round && round.phase) {
+      const at = new Date(round.setAt * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      now.innerHTML = `Everyone was moved to <b>${esc(round.label)}</b> at ${esc(at)}. Tap another round to move everyone again.`;
+    } else {
+      now.innerHTML = `Everyone starts on <b>${esc(rounds[0] || "PreCounts")}</b>. When official counts start, tap <b>${esc(rounds[1] || "First Count")}</b>.`;
+    }
+  }
+
+  async function setRound(label, setAt) {
+    const data = await api("/api/manager/round", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(setAt ? { label, setAt } : { label }),
+    });
+    round = data;
+    store.set("mgrRound", JSON.stringify({ label: data.label, setAt: data.setAt }));
+    return data;
+  }
+
+  $("round-btns").addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-round]");
+    if (!b || roundBusy) return;
+    const label = b.dataset.round;
+    if (round && round.phase === roundKey(label)) return;
+    if (!confirm(`Move everyone to ${label}?\n\nThe TV and every team phone will switch to ${label}.`)) return;
+    roundBusy = true; roundErr = ""; renderRound();
+    try { await setRound(label); }
+    catch (err) { if (err.message !== "401") roundErr = `Couldn't switch: ${err.message}. Try again.`; }
+    roundBusy = false; renderRound();
+  });
+
+  async function pollRound() {
+    loadRounds();
+    try {
+      const r = await fetch("/api/round", { cache: "no-store" });
+      round = await r.json();
+      // server restarted and forgot? put back what this page last set
+      let saved = null;
+      try { saved = JSON.parse(store.get("mgrRound") || "null"); } catch { saved = null; }
+      if (!round.phase && saved && saved.label && Date.now() / 1000 - saved.setAt < RESEND_WITHIN_S && !roundBusy) {
+        await setRound(saved.label, saved.setAt);
+      }
+      roundErr = "";
+    } catch { /* connection status shows in the top bar */ }
+    if (!roundBusy) renderRound();
   }
 
   /* ---------------------------------------------------------- lookup */
@@ -267,6 +363,8 @@
     // browsers block sound until the page is clicked once after loading
     document.addEventListener("pointerdown", unlockAudio, { once: true });
     seen = {};
+    lastRoundsFetch = 0;
+    renderRound();
     poll();
     clearInterval(pollTimer);
     pollTimer = setInterval(poll, POLL_MS);
