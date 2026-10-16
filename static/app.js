@@ -110,7 +110,8 @@
       .map((e, i) => {
         const isNow = i === nowIdx;
         const isPast = nowIdx !== -1 && i < nowIdx && parseClockTime(e.time) != null;
-        const cls = ["timeline-item", isNow && "now", isPast && "past"].filter(Boolean).join(" ");
+        const cls = ["timeline-item", isBreakEntry(e) && "break", isNow && "now", isPast && "past"]
+          .filter(Boolean).join(" ");
         return `
           <div class="${cls}">
             <div class="t-time">${escapeHtml(e.time || "")}</div>
@@ -129,6 +130,13 @@
     if (Math.abs(track.scrollLeft - target) > 2) {
       track.scrollTo({ left: target, behavior: "smooth" });
     }
+  }
+
+  // Lunch / dinner / any "break" row in the sheet is shown in red so it's
+  // obvious on the TV when everyone is off the floor.
+  const BREAK_RE = /\b(lunch|dinner|break)\b/i;
+  function isBreakEntry(e) {
+    return BREAK_RE.test(`${e.event || ""} ${e.notes || ""}`);
   }
 
   // When official counts start on the event day: the Timeline entry that
